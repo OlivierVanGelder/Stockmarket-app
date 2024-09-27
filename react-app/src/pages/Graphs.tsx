@@ -183,7 +183,7 @@ function Graphs() {
       {userDatas.map((element, index) => (
         <div
           key={index}
-          style={{ width: 1200, backgroundColor: "#444746", margin: "35px" }}
+          style={{ width: 1200, backgroundColor: "#FFFFFF", margin: "35px" }}
         >
           <LineChart chartData={element} />
         </div>
