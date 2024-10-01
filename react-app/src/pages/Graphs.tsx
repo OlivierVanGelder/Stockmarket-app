@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import "../App.css";
 import LineChart from "../components/LineChart";
 import CandleStickChart from "../components/CandleStickChart";
+import CandleItem from "../CandleItem";
 
 async function fetchStockData(
   ticker: string,
@@ -24,8 +25,25 @@ async function fetchStockData(
   }
 }
 
+async function fetchCandleStockData(
+  ticker: string,
+  interval: number = 1,
+  startDay: number,
+  endDay: number
+): Promise<CandleItem[]> {
+  try {
+    const response = await fetch(
+      `https://localhost:42069/candlestock?ticker=${ticker}&interval=${interval}&start=${startDay}&end=${endDay}`
+    ).then((res) => res.json() as Promise<CandleItem[]>);
+    return await response;
+  } catch (error) {
+    console.error(`Error fetching data for ${ticker}:`, error);
+    return [];
+  }
+}
+
 function extractData(
-  stockData: number[],
+  stockAmount: number,
   interval: number = 1, // Interval in days
   startDay: number
 ) {
@@ -34,38 +52,26 @@ function extractData(
   // Base date is "1980-01-01T12:00:00"
   const baseDate = new Date("1980-01-01T12:00:00");
 
-  for (let i = 0; i < stockData.length; i++) {
+  for (let i = 0; i < stockAmount; i++) {
     // Calculate the total increment in days, hours, or minutes
     const totalIncrement = i * interval + startDay;
-
-    // Create a new date based on the total increment
     const currentDate = new Date(baseDate);
-
-    // Increment by days
     currentDate.setDate(baseDate.getDate() + Math.floor(totalIncrement));
-
-    // Calculate the fractional part for hours and minutes
     const fractionalPart = totalIncrement - Math.floor(totalIncrement);
-
-    // Increment by hours (1 hour = 0.04166666667 days)
     currentDate.setHours(
       baseDate.getHours() + Math.floor(fractionalPart / 0.04166666667)
     );
-
-    // Increment by minutes (1 minute = 0.0006944444444 days)
     const remainingFraction = fractionalPart % 0.04166666667;
     currentDate.setMinutes(
       baseDate.getMinutes() + Math.floor(remainingFraction / 0.0006944444444)
     );
-
     // Format the date as "YYYY-MM-DDTHH:mm"
-    const formattedDate = currentDate.toISOString().slice(0, 16); // Use slice(0, 16) to omit seconds
+    const formattedDate = currentDate.toISOString().slice(0, 16);
     labels.push(formattedDate);
   }
 
   return {
     labels: labels,
-    data: stockData,
   };
 }
 
@@ -113,6 +119,8 @@ function Graphs() {
     datasets: [],
   });
 
+  const [candleData, setCandleData] = useState<CandleDataItem[]>([]);
+
   const userDatas = [
     userDataIBM,
     userDataAMZN,
@@ -137,19 +145,65 @@ function Graphs() {
       endDay
     );
     if (newStockData) {
-      const extractedData = extractData(newStockData, interval, startDay);
+      const extractedData = extractData(
+        newStockData.length,
+        interval,
+        startDay
+      );
       setUserData({
         labels: extractedData.labels,
         datasets: [
           {
             label: `Stock Price ${ticker}`,
-            data: extractedData.data,
+            data: newStockData,
             backgroundColor: color,
             borderColor: color,
           },
         ],
       });
     }
+  }
+
+  interface CandleDataItem {
+    x: Date;
+    y: [open: number, high: number, low: number, close: number];
+  }
+
+  async function getUserCandleData(
+    ticker: string,
+    interval: number,
+    startDay: number,
+    endDay: number
+  ) {
+    const newCandleData: CandleItem[] = await fetchCandleStockData(
+      ticker,
+      interval,
+      startDay,
+      endDay
+    );
+    if (newCandleData) {
+      const extractedData = extractData(
+        newCandleData.length,
+        interval,
+        startDay
+      );
+      console.log(extractedData);
+      for (let i = 0; i < newCandleData.length; i++) {
+        newCandleData[i].date = new Date(extractedData.labels[i]);
+      }
+      console.log(newCandleData);
+      const candleData = newCandleData.map(
+        (item) =>
+          ({
+            x: item.date, // Assuming timestamp is in seconds
+            y: [item.open, item.high, item.low, item.close],
+          } as CandleDataItem)
+      );
+      console.log(candleData);
+
+      return candleData;
+    }
+    return [];
   }
 
   useEffect(() => {
@@ -172,6 +226,7 @@ function Graphs() {
       await setUserData("MSFT", 0.017, 15000, 15001, setUserDataMSFT, [
         "rgb(150, 237, 9)",
       ]);
+      setCandleData(await getUserCandleData("IBM", 0.01, 15000, 15001));
     };
 
     fetchData();
@@ -179,7 +234,7 @@ function Graphs() {
 
   return (
     <div>
-      <CandleStickChart />
+      <CandleStickChart dataset={candleData} />
       {userDatas.map((element, index) => (
         <div
           key={index}

@@ -12,7 +12,7 @@
                 double startX = start;
                 double endX = end;
 
-                double[] results = ComputeValues(mS, startX, endX, interval);
+                double[] results = GetValues(mS, startX, endX, interval);
 
                 return results;
             })
@@ -20,7 +20,25 @@
             .WithOpenApi();
         }
 
-        private static double[] ComputeValues(double mS, double startX, double endX, double interval)
+        public static void GetCandleStock(this WebApplication app)
+        {
+
+            app.MapGet("/candlestock", (string ticker, double interval, double start, double end) =>
+            {
+
+                double mS = ConvertWordToNumber(ticker) + 1;
+                double startX = start;
+                double endX = end;
+
+                CandleItem[] results = GetCandleValues(mS, startX, endX, interval);
+
+                return results;
+            })
+            .WithName("GetCandleStockFromTicker")
+            .WithOpenApi();
+        }
+
+        private static double[] GetValues(double mS, double startX, double endX, double interval)
         {
             // Calculate the number of values based on the range and interval
             int numberOfValues = (int)((endX - startX) / interval) + 1;
@@ -36,6 +54,39 @@
             return values;
         }
 
+        private static CandleItem[] GetCandleValues(double mS, double startX, double endX, double interval)
+        {
+            // Calculate the number of values based on the range and interval
+            int numberOfValues = (int)((endX - startX) / interval) + 1;
+            CandleItem[] values = new CandleItem[numberOfValues];
+
+            for (int i = 0; i < numberOfValues; i++)
+            {
+                double x = startX + i * interval; // x increments by the specified interval
+                double open = CalculateFormula(x, mS);
+                double close = CalculateFormula(x + interval, mS);
+                double high = open;
+                double low = open;
+                for (int j = 0; j < 20; j++)
+                {
+                    double temp = CalculateFormula(x + (0.05 * j * interval), mS);
+                    if (temp > high)
+                    {
+                        high = temp;
+                    }
+                    else if (temp < low)
+                    {
+                        low = temp;
+                    }
+                }
+                open = Math.Round(open, 2);
+                close = Math.Round(close, 2);
+                high = Math.Round(high, 2);
+                low = Math.Round(low, 2);
+                values[i] = new CandleItem(open, close, high, low);
+            }
+            return values;
+        }
 
         private static double CalculateFormula(double x, double mS)
         {
@@ -56,6 +107,22 @@
             word = word + "AAAA";
             word.Substring(0, 4);
             return word.ToUpper().Sum(c => c - 'A');
+        }
+
+        private class CandleItem
+        {
+            public double Open { get; }
+            public double Close { get; }
+            public double High { get; }
+            public double Low { get; }
+
+            public CandleItem(double open, double close, double high, double low)
+            {
+                Open = open;
+                Close = close;
+                High = high;
+                Low = low;
+            }
         }
     }
 }
