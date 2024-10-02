@@ -171,10 +171,14 @@ function Graphs() {
 
   async function getUserCandleData(
     ticker: string,
-    interval: number,
     startDay: number,
-    endDay: number
+    endDay: number,
+    interval?: number
   ) {
+    if (!interval) {
+      interval = (endDay - startDay) / 100;
+    }
+
     const newCandleData: CandleItem[] = await fetchCandleStockData(
       ticker,
       interval,
@@ -223,10 +227,10 @@ function Graphs() {
       await setUserData("GOGL", 0.017, 15000, 15001, setUserDataGOOG, [
         "rgb(183, 40, 235)",
       ]);
-      await setUserData("MSFT", 0.017, 15000, 15001, setUserDataMSFT, [
+      await setUserData("MSFT", 0.017, 16200, 16201, setUserDataMSFT, [
         "rgb(150, 237, 9)",
       ]);
-      setCandleData(await getUserCandleData("IBM", 0.01, 15000, 15001));
+      setCandleData(await getUserCandleData("IBM", 16215, 16232));
     };
 
     fetchData();
