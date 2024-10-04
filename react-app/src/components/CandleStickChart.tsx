@@ -5,7 +5,8 @@ import dayjs from "dayjs";
 interface CandleStickChartProps {
   dataset: {
     x: Date;
-    y: number[];
+    y: number[]; // Open, High, Low, Close
+    volume: number; // Volume data
   }[];
 }
 
@@ -13,7 +14,11 @@ const CandleStickChart: React.FC<CandleStickChartProps> = ({ dataset }) => {
   const series = [
     {
       name: "candle",
-      data: dataset, // Use the dataset prop here
+      data: dataset.map((item) => ({
+        x: item.x,
+        y: item.y, // OHLC values [open, high, low, close]
+        volume: item.volume, // Volume data
+      })),
     },
   ];
 
@@ -22,19 +27,19 @@ const CandleStickChart: React.FC<CandleStickChartProps> = ({ dataset }) => {
       height: 450,
       type: "candlestick",
       zoom: {
-        enabled: true, // Enable zooming
-        type: "x", // Allow zooming only on the x-axis
-        autoScaleYaxis: true, // Automatically scale y-axis
+        enabled: true,
+        type: "x",
+        autoScaleYaxis: true,
       },
       toolbar: {
-        show: false, // Disable the toolbar (menu button)
+        show: false,
       },
     },
     title: {
       text: "CandleStick Chart - Category X-axis",
       align: "left",
       style: {
-        color: "#9AA0A6", // Setting the title color
+        color: "#9AA0A6",
       },
     },
     annotations: {
@@ -57,7 +62,25 @@ const CandleStickChart: React.FC<CandleStickChartProps> = ({ dataset }) => {
       ],
     },
     tooltip: {
-      enabled: true, // Enable tooltips
+      enabled: true,
+      custom: function ({ series, seriesIndex, dataPointIndex, w }: any) {
+        const ohlc = w.config.series[seriesIndex].data[dataPointIndex].y; // Get OHLC values
+        const volume = w.config.series[seriesIndex].data[dataPointIndex].volume; // Get volume
+
+        if (!ohlc || typeof volume === "undefined") {
+          return '<div style="padding: 10px;">No data available</div>';
+        }
+
+        return `
+          <div style="padding: 10px;">
+            <div><strong>Open:</strong> ${ohlc[0]}</div>
+            <div><strong>High:</strong> ${ohlc[1]}</div>
+            <div><strong>Low:</strong> ${ohlc[2]}</div>
+            <div><strong>Close:</strong> ${ohlc[3]}</div>
+            <div><strong>Volume:</strong> ${volume}</div>
+          </div>
+        `;
+      },
     },
     xaxis: {
       type: "category",
@@ -66,17 +89,28 @@ const CandleStickChart: React.FC<CandleStickChartProps> = ({ dataset }) => {
           return dayjs(val).format("MMM DD HH:mm");
         },
         style: {
-          colors: "#9AA0A6", // Setting the x-axis label color
+          colors: "#9AA0A6",
         },
       },
     },
     yaxis: {
       tooltip: {
-        enabled: true, // Enable y-axis tooltip
+        enabled: true,
       },
       labels: {
         style: {
-          colors: "#9AA0A6", // Setting the y-axis label color
+          colors: "#9AA0A6",
+        },
+      },
+    },
+    plotOptions: {
+      candlestick: {
+        colors: {
+          upward: "#089981", // Bullish candle color (green)
+          downward: "#f23645", // Bearish candle color (red)
+        },
+        wick: {
+          useFillColor: true, // Makes the wick the same color as the body
         },
       },
     },

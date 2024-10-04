@@ -3,5 +3,6 @@ export default interface CandleItem {
   high: number;
   low: number;
   close: number;
+  volume: number;
   date: Date;
 }

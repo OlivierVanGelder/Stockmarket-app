@@ -167,6 +167,7 @@ function Graphs() {
   interface CandleDataItem {
     x: Date;
     y: [open: number, high: number, low: number, close: number];
+    volume: number;
   }
 
   async function getUserCandleData(
@@ -176,7 +177,7 @@ function Graphs() {
     interval?: number
   ) {
     if (!interval) {
-      interval = (endDay - startDay) / 100;
+      interval = (endDay - startDay) / 150;
     }
 
     const newCandleData: CandleItem[] = await fetchCandleStockData(
@@ -201,6 +202,7 @@ function Graphs() {
           ({
             x: item.date, // Assuming timestamp is in seconds
             y: [item.open, item.high, item.low, item.close],
+            volume: item.volume,
           } as CandleDataItem)
       );
       console.log(candleData);
@@ -215,22 +217,22 @@ function Graphs() {
       await setUserData("IBM", 0.017, 15000, 15001, setUserDataIBM, [
         "rgb(242, 139, 130)",
       ]);
-      await setUserData("AMZN", 0.017, 15000, 15001, setUserDataAMZN, [
+      await setUserData("AMZN", 0.1, 16200, 16210, setUserDataAMZN, [
         "rgb(129, 201, 149)",
       ]);
-      await setUserData("TSLA", 0.017, 15000, 15001, setUserDataTSLA, [
+      await setUserData("TSLA", 0.02, 16200, 16210, setUserDataTSLA, [
         "rgb(2, 163, 212)",
       ]);
-      await setUserData("APPL", 0.017, 15000, 15001, setUserDataAPPL, [
+      await setUserData("APPL", 0.02, 16200, 16210, setUserDataAPPL, [
         "rgb(245, 185, 66)",
       ]);
-      await setUserData("GOGL", 0.017, 15000, 15001, setUserDataGOOG, [
+      await setUserData("GOGL", 0.02, 16200, 16210, setUserDataGOOG, [
         "rgb(183, 40, 235)",
       ]);
-      await setUserData("MSFT", 0.017, 16200, 16201, setUserDataMSFT, [
+      await setUserData("MSFT", 0.5, 16100, 16220, setUserDataMSFT, [
         "rgb(150, 237, 9)",
       ]);
-      setCandleData(await getUserCandleData("IBM", 16215, 16232));
+      setCandleData(await getUserCandleData("IBM", 16000, 16000.05));
     };
 
     fetchData();

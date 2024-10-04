@@ -1,4 +1,6 @@
 using Backend_Example;
+using Backend_Example.Logic.Classes;
+using Backend_Example.Presentation.Charts;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +12,8 @@ builder.Services.AddSwaggerGen();
 // Temporary CORS policy to allow all origins
 builder.Services.AddCors(policyBuilder =>
     policyBuilder.AddDefaultPolicy(policy =>
-        policy.WithOrigins("*").AllowAnyHeader().AllowAnyMethod())
+        policy.WithOrigins("*").AllowAnyHeader().AllowAnyMethod()
+    )
 );
 
 var app = builder.Build();
@@ -26,8 +29,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.SetupStock();
+app.GetLineStock();
 app.GetCandleStock();
-app.SetupOrders();
 
 app.Run();
