@@ -1,7 +1,7 @@
 ﻿using Backend_Example.Logic.Classes;
 using Backend_Example.Logic.Stocks;
 
-namespace Backend_Example.Presentation.Charts
+namespace Backend_Example.Charts
 {
     public static class Candlechart
     {

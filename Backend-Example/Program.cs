@@ -1,6 +1,6 @@
 using Backend_Example;
+using Backend_Example.Charts;
 using Backend_Example.Logic.Classes;
-using Backend_Example.Presentation.Charts;
 
 var builder = WebApplication.CreateBuilder(args);
 
