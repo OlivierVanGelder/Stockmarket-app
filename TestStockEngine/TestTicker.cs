@@ -11,7 +11,7 @@ namespace TestStockEngine
     public class TestTicker
     {
         [TestMethod]
-        [DataRow("ABKS", 29)]
+        [DataRow("PBKS", 44)]
         [DataRow("ABAB", 2)]
         [DataRow("DV", 24)]
         [DataRow("", 0)]
