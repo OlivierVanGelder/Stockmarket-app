@@ -17,7 +17,7 @@ namespace TestStockEngine
             double interval = 1;
 
             // Act
-            CandleItem[] values = candleStock.GetCandleValues(mS, startX, endX, interval);
+            CandleItem[] values = CandleStock.GetCandleValues(mS, startX, endX, interval);
 
             // Assert
             Assert.IsFalse(values.Any(v => v.Low > v.High));
@@ -34,7 +34,7 @@ namespace TestStockEngine
             double interval = 1;
 
             // Act
-            CandleItem[] values = candleStock.GetCandleValues(mS, startX, endX, interval);
+            CandleItem[] values = CandleStock.GetCandleValues(mS, startX, endX, interval);
 
             // Assert
             Assert.IsTrue(values.Any(v => v.Volume >= 0));

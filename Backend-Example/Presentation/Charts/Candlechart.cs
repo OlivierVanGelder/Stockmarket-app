@@ -17,7 +17,12 @@ namespace Backend_Example.Charts
                         double startX = start;
                         double endX = end;
 
-                        CandleItem[] results = stock.GetCandleValues(mS, startX, endX, interval);
+                        CandleItem[] results = CandleStock.GetCandleValues(
+                            mS,
+                            startX,
+                            endX,
+                            interval
+                        );
 
                         return results;
                     }

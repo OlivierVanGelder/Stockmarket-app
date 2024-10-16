@@ -14,7 +14,8 @@ namespace Backend_Example.Logic.Stocks
             for (int i = 0; i < numberOfValues; i++)
             {
                 double x = startX + i * interval; // x increments by the specified interval
-                double result = formula.CalculateFormula(x, mS);
+                double? outcome = Formula.CalculateFormula(x, mS);
+                double result = outcome ?? 0;
                 values[i] = Math.Round(result, 2); // Round the result to two decimals
             }
 
