@@ -14,7 +14,6 @@ namespace TestStockEngine
         public void TestFormulaOutput(double x, int mS)
         {
             // Arrange
-            Formula formula = new Formula();
 
             // Act
             double? result = Formula.CalculateFormula(x, mS);

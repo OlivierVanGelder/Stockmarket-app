@@ -1,4 +1,5 @@
 ﻿using Backend_Example.Logic.Classes;
+using Logic.Interfaces;
 
 namespace Backend_Example.Logic.Stocks
 {
@@ -46,6 +47,11 @@ namespace Backend_Example.Logic.Stocks
                 values[i] = new CandleItem(open, close, high, low, volume);
             }
             return values;
+        }
+
+        public static string[] GetStockNames(StockDALinterface stockDAL)
+        {
+            return stockDAL.GetStockNames();
         }
     }
 }

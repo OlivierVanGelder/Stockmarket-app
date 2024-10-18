@@ -1,5 +1,6 @@
 using Backend_Example;
 using Backend_Example.Charts;
+using Backend_Example.Functions;
 using Backend_Example.Logic.Classes;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,5 +32,6 @@ app.UseHttpsRedirection();
 
 app.GetLineStock();
 app.GetCandleStock();
+app.GetStockNames();
 
 app.Run();

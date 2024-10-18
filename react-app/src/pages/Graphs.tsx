@@ -25,6 +25,19 @@ async function fetchStockData(
   }
 }
 
+async function fetchStockNames() {
+  try {
+    const response = await fetch("https://localhost:42069/stocknames");
+    if (!response.ok) {
+      throw new Error("Failed to fetch stock names");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching stock names:", error);
+    return [];
+  }
+}
+
 async function fetchCandleStockData(
   ticker: string,
   interval: number = 1,
@@ -129,6 +142,14 @@ function Graphs() {
     userDataGOOG,
     userDataMSFT,
   ];
+
+  var [stocknames, setStockNames] = useState<string[]>([]);
+  useEffect(() => {
+    const fetchData = async () => {
+      setStockNames(await fetchStockNames());
+    };
+    fetchData();
+  }, []);
 
   async function setUserData(
     ticker: string,
@@ -240,6 +261,11 @@ function Graphs() {
 
   return (
     <div>
+      <select>
+        {stocknames.map((element, index) => (
+          <option key={index}>{element}</option>
+        ))}
+      </select>
       <CandleStickChart dataset={candleData} />
       {userDatas.map((element, index) => (
         <div
