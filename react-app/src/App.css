@@ -41,6 +41,14 @@ nav ul li a {
   text-decoration: none;
   color: #FFFFFF;
   font-weight: bold;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+nav ul li {
+  padding: 10px;
 }
 
 nav ul li:hover {
@@ -48,4 +56,14 @@ nav ul li:hover {
   a{
     color: #FFD369;
   }
+}
+
+select {
+  padding: 10px;
+  margin: 10px;
+  border-radius: 5px;
+  background-color: #FFD369;
+  color: #FFFFFF;
+  font-weight: bold;
+  font-size: large;
 }
