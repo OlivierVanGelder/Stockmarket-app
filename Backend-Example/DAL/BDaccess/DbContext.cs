@@ -7,6 +7,7 @@ namespace Backend_Example.Data.BDaccess
     {
         public DbSet<User> Users { get; set; }
         public DbSet<Stock> Stocks { get; set; }
+        public DbSet<CandleStockMinute> Candles { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options) =>
             options.UseSqlServer(
@@ -38,5 +39,18 @@ namespace Backend_Example.Data.BDaccess
         public int Id { get; set; }
         public string Ticker { get; set; }
         public int PriceInCents { get; set; }
+    }
+
+    [Table("CandleStockMinute")]
+    public class CandleStockMinute
+    {
+        public int Id { get; set; }
+        public int Stock_Id { get; set; }
+        public DateTime Date { get; set; }
+        public int Open { get; set; }
+        public int High { get; set; }
+        public int Low { get; set; }
+        public int Close { get; set; }
+        public int Volume { get; set; }
     }
 }

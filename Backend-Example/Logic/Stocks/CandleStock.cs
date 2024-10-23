@@ -44,13 +44,32 @@ namespace Backend_Example.Logic.Stocks
                 close = Math.Round(close, 2);
                 high = Math.Round(high, 2);
                 low = Math.Round(low, 2);
-                values[i] = new CandleItem(open, close, high, low, volume);
+                values[i] = new CandleItem(
+                    open,
+                    close,
+                    high,
+                    low,
+                    volume,
+                    DateTime.Parse("1000-1-1 1:00")
+                );
             }
             return values;
         }
 
         public static string[] GetStockNames(StockDALinterface stockDAL)
         {
+            CandleItem[] values = new CandleItem[]
+            {
+                new CandleItem(
+                    250.45,
+                    250.98,
+                    251.06,
+                    250.32,
+                    310.00,
+                    DateTime.Parse("2024-10-23 16:42:00")
+                ),
+            };
+            stockDAL.WriteStocks(values, "META");
             return stockDAL.GetStockNames();
         }
     }
