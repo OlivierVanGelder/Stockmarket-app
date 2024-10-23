@@ -6,14 +6,14 @@ using Logic.Interfaces;
 
 namespace DAL.BDaccess
 {
-    public class StockDAL : StockDALinterface
+    public class UserDAL : UserDALinterface
     {
-        public string[] GetStockNames()
+        public string[] GetUsers()
         {
             using (var db = new DbContext())
             {
-                var stock = db.Stocks;
-                return stock.Select(s => s.Ticker).ToArray();
+                var user = db.Users;
+                return user.Select(s => s.Name).ToArray();
             }
         }
     }
