@@ -20,6 +20,7 @@ builder.Services.AddCors(policyBuilder =>
 var app = builder.Build();
 
 app.UseCors();
+app.UseWebSockets();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
