@@ -65,7 +65,7 @@ namespace Backend_Example.Charts
                     string stock = message[0];
                     double interval = double.Parse(message[1]);
                     double startX = double.Parse(message[2]);
-                    double endX = double.Parse(message[3]);
+                    double endX = double.Parse(message[3].Replace("\"", ""));
                     double mS = tickerConverter.ConvertWordToNumber(stock) + 1;
 
                     double[] results = lineStock.GetValues(mS, startX, endX, interval);

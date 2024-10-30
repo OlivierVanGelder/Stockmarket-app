@@ -27,6 +27,7 @@ namespace Backend_Example.Data.BDaccess
     }
 
     [Table("User_Stock")]
+    [PrimaryKey(nameof(UserId), nameof(StockId))]
     public class User_Stock
     {
         public int UserId { get; set; }

@@ -69,7 +69,7 @@ namespace Backend_Example.Logic.Stocks
                     DateTime.Parse("2024-10-23 16:42:00")
                 ),
             };
-            stockDAL.WriteStocks(values, "META");
+            //stockDAL.WriteStocks(values, "META");
             return stockDAL.GetStockNames();
         }
     }

@@ -134,6 +134,11 @@ function Graphs() {
 
   const [candleData, setCandleData] = useState<CandleDataItem[]>([]);
 
+  const [ticker, setTicker] = useState("IBM");
+  const [interval, setInterval] = useState(2);
+  const [startDay, setStartDay] = useState(15000);
+  const [endDay, setEndDay] = useState(15100);
+
   const userDatas = [
     userDataIBM,
     userDataAMZN,
@@ -157,14 +162,9 @@ function Graphs() {
     startDay: number,
     endDay: number,
     setUserData: any,
-    color: string[]
+    color: string[],
+    newStockData: any
   ) {
-    const newStockData = await fetchStockData(
-      ticker,
-      interval,
-      startDay,
-      endDay
-    );
     if (newStockData) {
       const extractedData = extractData(
         newStockData.length,
@@ -234,29 +234,27 @@ function Graphs() {
   }
 
   useEffect(() => {
-    const fetchData = async () => {
-      await setUserData("IBM", 0.017, 15000, 15001, setUserDataIBM, [
-        "rgb(242, 139, 130)",
-      ]);
-      await setUserData("AMZN", 0.1, 16200, 16210, setUserDataAMZN, [
-        "rgb(129, 201, 149)",
-      ]);
-      await setUserData("TSLA", 0.02, 16200, 16210, setUserDataTSLA, [
-        "rgb(2, 163, 212)",
-      ]);
-      await setUserData("APPL", 0.02, 16200, 16210, setUserDataAPPL, [
-        "rgb(245, 185, 66)",
-      ]);
-      await setUserData("GOGL", 0.02, 16200, 16210, setUserDataGOOG, [
-        "rgb(183, 40, 235)",
-      ]);
-      await setUserData("MSFT", 0.5, 16100, 16220, setUserDataMSFT, [
-        "rgb(150, 237, 9)",
-      ]);
-      setCandleData(await getUserCandleData("IBM", 16000, 16000.05));
+    const socket = new WebSocket(`https://localhost:42069/stockWS`);
+    socket.onopen = () => {
+      console.log("Connected to websocket");
+      socket.send(
+        JSON.stringify(`${ticker}-${interval}-${startDay}-${endDay}`)
+      );
+    };
+    socket.onmessage = (event) => {
+      const newData = JSON.parse(event.data);
+      setUserData(
+        ticker,
+        interval,
+        startDay,
+        endDay,
+        setUserDataIBM,
+        ["rgb(242, 139, 130)"],
+        newData
+      );
     };
 
-    fetchData();
+    //setCandleData(await getUserCandleData("IBM", 16000, 16000.05));
   }, []);
 
   return (
