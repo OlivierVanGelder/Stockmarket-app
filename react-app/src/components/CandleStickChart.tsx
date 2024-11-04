@@ -17,7 +17,7 @@ const CandleStickChart: React.FC<CandleStickChartProps> = ({ dataset }) => {
       data: dataset.map((item) => ({
         x: item.x,
         y: item.y, // OHLC values [open, high, low, close]
-        volume: item.volume, // Volume data
+        volume: item.volume, // Ensure volume is directly mapped
       })),
     },
   ];
@@ -63,11 +63,11 @@ const CandleStickChart: React.FC<CandleStickChartProps> = ({ dataset }) => {
     },
     tooltip: {
       enabled: true,
-      custom: function ({ series, seriesIndex, dataPointIndex, w }: any) {
+      custom: function ({ seriesIndex, dataPointIndex, w }: any) {
         const ohlc = w.config.series[seriesIndex].data[dataPointIndex].y; // Get OHLC values
         const volume = w.config.series[seriesIndex].data[dataPointIndex].volume; // Get volume
-
-        if (!ohlc || typeof volume === "undefined") {
+        console.log(w);
+        if (!ohlc) {
           return '<div style="padding: 10px;">No data available</div>';
         }
 

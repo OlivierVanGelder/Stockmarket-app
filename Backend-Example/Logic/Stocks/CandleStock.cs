@@ -37,9 +37,12 @@ namespace Backend_Example.Logic.Stocks
                     }
                 }
                 double volume = Math.Round(
-                    100 / open * (high - low) * (2582 + (Math.Sin(30000 * x) + 1) * mS * 50),
-                    3
+                    Math.Abs(
+                        100 / open * (high - low) * (2582 + (Math.Sin(30000 * x) + 1) * mS * 50)
+                    ),
+                    2
                 );
+
                 open = Math.Round(open, 2);
                 close = Math.Round(close, 2);
                 high = Math.Round(high, 2);

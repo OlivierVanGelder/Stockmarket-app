@@ -6,6 +6,13 @@ import Account from "./pages/Account";
 import Graphs from "./pages/Graphs";
 import Stock from "./pages/Stock";
 
+const Home = () => (
+  <div>
+    <h1>Welcome to the Stock App</h1>
+    <p>Please select an option from the menu above.</p>
+  </div>
+);
+
 function App() {
   return (
     <div className="App">
@@ -26,6 +33,7 @@ function App() {
           </nav>
 
           <Routes>
+            <Route path="/" element={<Home />} />
             <Route path="/graphs" element={<Graphs />} />
             <Route path="/stock" element={<Stock />} />
             <Route path="/account" element={<Account />} />

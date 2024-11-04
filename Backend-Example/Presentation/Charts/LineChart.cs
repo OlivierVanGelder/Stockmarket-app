@@ -80,6 +80,26 @@ namespace Backend_Example.Charts
                         CancellationToken.None
                     );
                 }
+                else if (message.Length == 5)
+                {
+                    Ticker tickerConverter = new();
+                    string stock = message[0];
+                    double interval = double.Parse(message[1]);
+                    double startX = double.Parse(message[2]);
+                    double endX = double.Parse(message[3].Replace("\"", ""));
+                    double mS = tickerConverter.ConvertWordToNumber(stock) + 1;
+
+                    CandleItem[] results = CandleStock.GetCandleValues(mS, startX, endX, interval);
+                    string resultJson = JsonSerializer.Serialize(results);
+                    byte[] resultBuffer = Encoding.UTF8.GetBytes(resultJson);
+
+                    await webSocket.SendAsync(
+                        new ArraySegment<byte>(resultBuffer),
+                        receiveResult.MessageType,
+                        receiveResult.EndOfMessage,
+                        CancellationToken.None
+                    );
+                }
 
                 receiveResult = await webSocket.ReceiveAsync(
                     new ArraySegment<byte>(buffer),

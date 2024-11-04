@@ -1,16 +1,16 @@
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "../App.css";
 import LineChart from "../components/LineChart";
 import CandleStickChart from "../components/CandleStickChart";
 import CandleItem from "../CandleItem";
+import ToggleButtonNotEmpty from "../components/ToggleButton";
 
 async function fetchStockData(
   ticker: string,
   interval: number = 1,
   startDay: number,
   endDay: number
-) {
+): Promise<any> {
   try {
     const response = await fetch(
       `https://localhost:42069/stock?ticker=${ticker}&interval=${interval}&start=${startDay}&end=${endDay}`
@@ -25,7 +25,7 @@ async function fetchStockData(
   }
 }
 
-async function fetchStockNames() {
+async function fetchStockNames(): Promise<string[]> {
   try {
     const response = await fetch("https://localhost:42069/stocknames");
     if (!response.ok) {
@@ -47,8 +47,8 @@ async function fetchCandleStockData(
   try {
     const response = await fetch(
       `https://localhost:42069/candlestock?ticker=${ticker}&interval=${interval}&start=${startDay}&end=${endDay}`
-    ).then((res) => res.json() as Promise<CandleItem[]>);
-    return await response;
+    ).then((res) => res.json());
+    return response;
   } catch (error) {
     console.error(`Error fetching data for ${ticker}:`, error);
     return [];
@@ -57,16 +57,13 @@ async function fetchCandleStockData(
 
 function extractData(
   stockAmount: number,
-  interval: number = 1, // Interval in days
+  interval: number = 1,
   startDay: number
 ) {
   const labels: string[] = [];
-
-  // Base date is "1980-01-01T12:00:00"
   const baseDate = new Date("1980-01-01T12:00:00");
 
   for (let i = 0; i < stockAmount; i++) {
-    // Calculate the total increment in days, hours, or minutes
     const totalIncrement = i * interval + startDay;
     const currentDate = new Date(baseDate);
     currentDate.setDate(baseDate.getDate() + Math.floor(totalIncrement));
@@ -78,7 +75,6 @@ function extractData(
     currentDate.setMinutes(
       baseDate.getMinutes() + Math.floor(remainingFraction / 0.0006944444444)
     );
-    // Format the date as "YYYY-MM-DDTHH:mm"
     const formattedDate = currentDate.toISOString().slice(0, 16);
     labels.push(formattedDate);
   }
@@ -89,66 +85,23 @@ function extractData(
 }
 
 function Graphs() {
-  const [userDataIBM, setUserDataIBM] = useState<{
-    labels: string[];
-    datasets: any[];
-  }>({
-    labels: [],
-    datasets: [],
-  });
-  const [userDataAMZN, setUserDataAMZN] = useState<{
-    labels: string[];
-    datasets: any[];
-  }>({
-    labels: [],
-    datasets: [],
-  });
-  const [userDataTSLA, setUserDataTSLA] = useState<{
-    labels: string[];
-    datasets: any[];
-  }>({
-    labels: [],
-    datasets: [],
-  });
-  const [userDataAPPL, setUserDataAPPL] = useState<{
-    labels: string[];
-    datasets: any[];
-  }>({
-    labels: [],
-    datasets: [],
-  });
-  const [userDataGOOG, setUserDataGOOG] = useState<{
-    labels: string[];
-    datasets: any[];
-  }>({
-    labels: [],
-    datasets: [],
-  });
-  const [userDataMSFT, setUserDataMSFT] = useState<{
-    labels: string[];
-    datasets: any[];
-  }>({
-    labels: [],
-    datasets: [],
-  });
-
+  const [candleSelected, setCandleSelected] = useState<boolean>(false);
+  const [ticker, setTicker] = useState<string>("AAPL");
+  const tickerRef = useRef(ticker);
   const [candleData, setCandleData] = useState<CandleDataItem[]>([]);
+  const [interval, setInterval] = useState<number>(1 / 24);
+  const [startDay, setStartDay] = useState<number>(15093);
+  const [endDay, setEndDay] = useState<number>(15100);
+  const [chartData, setUserData] = useState<{
+    labels: string[];
+    datasets: any[];
+  }>({
+    labels: [],
+    datasets: [],
+  });
+  const [stocknames, setStockNames] = useState<string[]>([]);
+  const [socket, setSocket] = useState<WebSocket | null>(null);
 
-  const [ticker, setTicker] = useState("IBM");
-  const [interval, setInterval] = useState(2);
-  const [startDay, setStartDay] = useState(15000);
-  const [endDay, setEndDay] = useState(15100);
-
-  const userDatas = [
-    userDataIBM,
-    userDataAMZN,
-    userDataTSLA,
-    userDataAPPL,
-    userDataGOOG,
-    userDataMSFT,
-  ];
-
-  var [stocknames, setStockNames] = useState<string[]>([]);
   useEffect(() => {
     const fetchData = async () => {
       setStockNames(await fetchStockNames());
@@ -156,12 +109,67 @@ function Graphs() {
     fetchData();
   }, []);
 
-  async function setUserData(
+  useEffect(() => {
+    tickerRef.current = ticker;
+  }, [ticker]);
+
+  useEffect(() => {
+    const newSocket = new WebSocket(`wss://localhost:42069/stockWS`);
+
+    newSocket.onopen = () => {
+      console.log("Connected to websocket");
+      if (candleSelected) {
+        newSocket.send(
+          JSON.stringify(`${ticker}-${interval}-${startDay}-${endDay}-candle`)
+        );
+      } else if (!candleSelected) {
+        newSocket.send(
+          JSON.stringify(`${ticker}-${interval}-${startDay}-${endDay}`)
+        );
+      }
+    };
+
+    newSocket.onmessage = (event) => {
+      const newData = JSON.parse(event.data);
+      console.log("Received data:", newData);
+      const tickerValue = tickerRef.current;
+
+      if (candleSelected) {
+        ApplyCandleData(
+          tickerValue,
+          interval,
+          startDay,
+          setCandleData,
+          newData
+        );
+      } else {
+        applyLineData(
+          tickerValue,
+          interval,
+          startDay,
+          endDay,
+          setUserData,
+          ["rgb(242, 139, 130)"],
+          newData
+        );
+      }
+    };
+
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.close();
+    };
+  }, [interval, startDay, endDay, candleSelected, ticker]);
+
+  async function applyLineData(
     ticker: string,
     interval: number,
     startDay: number,
     endDay: number,
-    setUserData: any,
+    setUserData: React.Dispatch<
+      React.SetStateAction<{ labels: string[]; datasets: any[] }>
+    >,
     color: string[],
     newStockData: any
   ) {
@@ -175,7 +183,7 @@ function Graphs() {
         labels: extractedData.labels,
         datasets: [
           {
-            label: `Stock Price ${ticker}`,
+            label: `Stock Price for ${ticker}`,
             data: newStockData,
             backgroundColor: color,
             borderColor: color,
@@ -191,88 +199,69 @@ function Graphs() {
     volume: number;
   }
 
-  async function getUserCandleData(
+  async function ApplyCandleData(
     ticker: string,
+    interval: number,
     startDay: number,
-    endDay: number,
-    interval?: number
+    setCandleData: React.Dispatch<React.SetStateAction<CandleDataItem[]>>,
+    newCandleData: any
   ) {
-    if (!interval) {
-      interval = (endDay - startDay) / 150;
+    // Check if newCandleData is an array and has valid data
+    if (!Array.isArray(newCandleData) || newCandleData.length === 0) {
+      console.error("Invalid candle data received:", newCandleData);
+      return; // Exit if data is invalid
     }
 
-    const newCandleData: CandleItem[] = await fetchCandleStockData(
-      ticker,
-      interval,
-      startDay,
-      endDay
-    );
-    if (newCandleData) {
-      const extractedData = extractData(
-        newCandleData.length,
-        interval,
-        startDay
-      );
-      console.log(extractedData);
-      for (let i = 0; i < newCandleData.length; i++) {
-        newCandleData[i].date = new Date(extractedData.labels[i]);
-      }
-      console.log(newCandleData);
-      const candleData = newCandleData.map(
-        (item) =>
-          ({
-            x: item.date, // Assuming timestamp is in seconds
-            y: [item.open, item.high, item.low, item.close],
-            volume: item.volume,
-          } as CandleDataItem)
-      );
-      console.log(candleData);
+    const extractedData = extractData(newCandleData.length, interval, startDay);
 
-      return candleData;
-    }
-    return [];
+    const candleData = newCandleData.reduce<CandleDataItem[]>(
+      (acc, item, index) => {
+        if (item && typeof item === "object") {
+          acc.push({
+            x: new Date(extractedData.labels[index]), // Use the corresponding date
+            y: [item.Open, item.High, item.Low, item.Close],
+            volume: item.Volume,
+          });
+        } else {
+          console.error("Invalid candle item format:", item);
+        }
+        return acc;
+      },
+      []
+    ); // Start with an empty array
+
+    // Set the valid candle data
+    setCandleData(candleData);
   }
-
-  useEffect(() => {
-    const socket = new WebSocket(`https://localhost:42069/stockWS`);
-    socket.onopen = () => {
-      console.log("Connected to websocket");
-      socket.send(
-        JSON.stringify(`${ticker}-${interval}-${startDay}-${endDay}`)
-      );
-    };
-    socket.onmessage = (event) => {
-      const newData = JSON.parse(event.data);
-      setUserData(
-        ticker,
-        interval,
-        startDay,
-        endDay,
-        setUserDataIBM,
-        ["rgb(242, 139, 130)"],
-        newData
-      );
-    };
-
-    //setCandleData(await getUserCandleData("IBM", 16000, 16000.05));
-  }, []);
 
   return (
     <div>
-      <select>
+      <select
+        value={ticker}
+        onChange={(e) => {
+          const value: string = e.target.value.toString();
+          setTicker(value);
+        }}
+      >
         {stocknames.map((element, index) => (
-          <option key={index}>{element}</option>
+          <option key={index} value={element}>
+            {element}
+          </option>
         ))}
       </select>
-      <CandleStickChart dataset={candleData} />
-      {userDatas.map((element, index) => (
+      <ToggleButtonNotEmpty
+        candleSelected={candleSelected}
+        setCandleSelected={setCandleSelected}
+      />
+      {!candleSelected ? (
         <div
-          key={index}
           style={{ width: 1200, backgroundColor: "#FFFFFF", margin: "35px" }}
         >
-          <LineChart chartData={element} />
+          <LineChart chartData={chartData} />
         </div>
-      ))}
+      ) : (
+        <CandleStickChart dataset={candleData} />
+      )}
     </div>
   );
 }
