@@ -90,8 +90,8 @@ function Graphs() {
   const tickerRef = useRef(ticker);
   const [candleData, setCandleData] = useState<CandleDataItem[]>([]);
   const [interval, setInterval] = useState<number>(1 / 24);
-  const [startDay, setStartDay] = useState<number>(15093);
-  const [endDay, setEndDay] = useState<number>(15100);
+  const [startDay, setStartDay] = useState<number>(15993);
+  const [endDay, setEndDay] = useState<number>(16000);
   const [chartData, setUserData] = useState<{
     labels: string[];
     datasets: any[];
@@ -248,6 +248,34 @@ function Graphs() {
             {element}
           </option>
         ))}
+      </select>
+
+      <select
+        value={interval}
+        onChange={(e) => {
+          const value: number = parseInt(e.target.value);
+          setStartDay(value);
+        }}
+      >
+        <option value={16000 - 0.04166666667}>{"1 hour"}</option>
+        <option value={15999}>{"1 day"}</option>
+        <option value={15993}>{"1 week"}</option>
+        <option value={15969}>{"1 month"}</option>
+        <option value={15635}>{"1 year"}</option>
+        <option value={0}>{"all"}</option>
+      </select>
+
+      <select
+        value={interval}
+        onChange={(e) => {
+          const value: number = parseInt(e.target.value);
+          setInterval(value);
+        }}
+      >
+        <option value={7}>{"1 week"}</option>
+        <option value={1}>{"1 day"}</option>
+        <option value={0.04166666667}>{"1 hour"}</option>
+        <option value={0.0006944444444}>{"1 min"}</option>
       </select>
       <ToggleButtonNotEmpty
         candleSelected={candleSelected}

@@ -23,19 +23,6 @@ namespace Backend_Example.Logic.Stocks
                 double close = Formula.CalculateFormula(x + interval, mS) ?? 0;
                 double high = open;
                 double low = open;
-
-                for (int j = 0; j < 32; j++)
-                {
-                    double temp = Formula.CalculateFormula(x + 0.03125 * j * interval, mS) ?? 0;
-                    if (temp > high)
-                    {
-                        high = temp;
-                    }
-                    else
-                    {
-                        low = temp;
-                    }
-                }
                 double volume = Math.Round(
                     Math.Abs(
                         100 / open * (high - low) * (2582 + (Math.Sin(30000 * x) + 1) * mS * 50)
@@ -61,17 +48,17 @@ namespace Backend_Example.Logic.Stocks
 
         public static string[] GetStockNames(StockDALinterface stockDAL)
         {
-            CandleItem[] values = new CandleItem[]
-            {
-                new CandleItem(
-                    250.45,
-                    250.98,
-                    251.06,
-                    250.32,
-                    310.00,
-                    DateTime.Parse("2024-10-23 16:42:00")
-                ),
-            };
+            //CandleItem[] values = new CandleItem[]
+            //{
+            //    new CandleItem(
+            //        250.45,
+            //        250.98,
+            //        251.06,
+            //        250.32,
+            //        310.00,
+            //        DateTime.Parse("2024-10-23 16:42:00")
+            //    ),
+            //};
             //stockDAL.WriteStocks(values, "META");
             return stockDAL.GetStockNames();
         }
