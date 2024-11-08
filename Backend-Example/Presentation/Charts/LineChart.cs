@@ -4,6 +4,8 @@ using System.Text.Json;
 using Backend_Example.Data.BDaccess;
 using Backend_Example.Logic.Classes;
 using Backend_Example.Logic.Stocks;
+using DAL.BDaccess;
+using Logic.Interfaces;
 
 namespace Backend_Example.Charts
 {
@@ -16,8 +18,7 @@ namespace Backend_Example.Charts
                     (string ticker, double interval, double start, double end) =>
                     {
                         LineStock stock = new();
-                        Ticker tickerConverter = new();
-                        double mS = tickerConverter.ConvertWordToNumber(ticker) + 1;
+                        double mS = Converter.ConvertWordToNumber(ticker) + 1;
                         double startX = start;
                         double endX = end;
 
@@ -61,12 +62,11 @@ namespace Backend_Example.Charts
                 if (message.Length == 4)
                 {
                     LineStock lineStock = new();
-                    Ticker tickerConverter = new();
                     string stock = message[0];
                     double interval = double.Parse(message[1]);
                     double startX = double.Parse(message[2]);
                     double endX = double.Parse(message[3].Replace("\"", ""));
-                    double mS = tickerConverter.ConvertWordToNumber(stock) + 1;
+                    double mS = Converter.ConvertWordToNumber(stock) + 1;
 
                     double[] results = lineStock.GetValues(mS, startX, endX, interval);
                     string resultJson = JsonSerializer.Serialize(results);
@@ -82,14 +82,18 @@ namespace Backend_Example.Charts
                 }
                 else if (message.Length == 5)
                 {
-                    Ticker tickerConverter = new();
-                    string stock = message[0];
+                    string stock = message[0].Replace("\"", "");
                     double interval = double.Parse(message[1]);
                     double startX = double.Parse(message[2]);
                     double endX = double.Parse(message[3].Replace("\"", ""));
-                    double mS = tickerConverter.ConvertWordToNumber(stock) + 1;
+                    CandleItem[] results = CandleStock.GetCandleValues(
+                        stock,
+                        startX,
+                        endX,
+                        interval,
+                        new StockDAL()
+                    );
 
-                    CandleItem[] results = CandleStock.GetCandleValues(mS, startX, endX, interval);
                     string resultJson = JsonSerializer.Serialize(results);
                     byte[] resultBuffer = Encoding.UTF8.GetBytes(resultJson);
 

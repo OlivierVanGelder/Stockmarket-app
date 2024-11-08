@@ -11,5 +11,14 @@ namespace Logic.Interfaces
     {
         string[] GetStockNames();
         void WriteStocks(CandleItem[] c, string ticker);
+        void DeleteDuplicateStocks();
+
+        CandleItem[] GetCandleValues(
+            string stock,
+            DateTime startDate,
+            DateTime endDate,
+            TimeSpan interval
+        );
+        DateTime GetLastStockDate();
     }
 }

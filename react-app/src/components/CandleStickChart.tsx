@@ -66,7 +66,6 @@ const CandleStickChart: React.FC<CandleStickChartProps> = ({ dataset }) => {
       custom: function ({ seriesIndex, dataPointIndex, w }: any) {
         const ohlc = w.config.series[seriesIndex].data[dataPointIndex].y; // Get OHLC values
         const volume = w.config.series[seriesIndex].data[dataPointIndex].volume; // Get volume
-        console.log(w);
         if (!ohlc) {
           return '<div style="padding: 10px;">No data available</div>';
         }

@@ -2,6 +2,8 @@ using Backend_Example;
 using Backend_Example.Charts;
 using Backend_Example.Functions;
 using Backend_Example.Logic.Classes;
+using DAL.BDaccess;
+using Logic.Functions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +18,11 @@ builder.Services.AddCors(policyBuilder =>
         policy.WithOrigins("*").AllowAnyHeader().AllowAnyMethod()
     )
 );
+
+StockDAL stockDAL = new StockDAL();
+
+//StockWritingInterval stockWritingInterval = new StockWritingInterval(20, stockDAL);
+//StockDeletingInterval stockDeletingInterval = new StockDeletingInterval(5, stockDAL);
 
 var app = builder.Build();
 

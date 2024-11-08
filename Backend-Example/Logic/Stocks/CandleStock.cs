@@ -6,6 +6,20 @@ namespace Backend_Example.Logic.Stocks
     public class CandleStock
     {
         public static CandleItem[] GetCandleValues(
+            string stock,
+            double startX,
+            double endX,
+            double intervalDays,
+            StockDALinterface stockDAL
+        )
+        {
+            DateTime startDate = Converter.ConvertDigitToDate(startX);
+            DateTime endDate = Converter.ConvertDigitToDate(endX);
+            TimeSpan interval = TimeSpan.FromDays(intervalDays);
+            return stockDAL.GetCandleValues(stock, startDate, endDate, interval);
+        }
+
+        public static CandleItem[] CreateCandleValues(
             double mS,
             double startX,
             double endX,
@@ -21,12 +35,11 @@ namespace Backend_Example.Logic.Stocks
                 double x = startX + i * interval; // x increments by the specified interval
                 double open = Formula.CalculateFormula(x, mS) ?? 0;
                 double close = Formula.CalculateFormula(x + interval, mS) ?? 0;
-                double high = open;
-                double low = open;
+                double high = GetHighValue(x, interval, mS);
+                double low = GetLowValue(x, interval, mS);
+                DateTime date = Converter.ConvertDigitToDate(x);
                 double volume = Math.Round(
-                    Math.Abs(
-                        100 / open * (high - low) * (2582 + (Math.Sin(30000 * x) + 1) * mS * 50)
-                    ),
+                    Math.Abs(100 / open * (high - low) * (258 + (Math.Sin(30000 * x) + 1) * mS)),
                     2
                 );
 
@@ -34,33 +47,38 @@ namespace Backend_Example.Logic.Stocks
                 close = Math.Round(close, 2);
                 high = Math.Round(high, 2);
                 low = Math.Round(low, 2);
-                values[i] = new CandleItem(
-                    open,
-                    close,
-                    high,
-                    low,
-                    volume,
-                    DateTime.Parse("1000-1-1 1:00")
-                );
+                values[i] = new CandleItem(open, close, high, low, volume, date);
             }
             return values;
         }
 
         public static string[] GetStockNames(StockDALinterface stockDAL)
         {
-            //CandleItem[] values = new CandleItem[]
-            //{
-            //    new CandleItem(
-            //        250.45,
-            //        250.98,
-            //        251.06,
-            //        250.32,
-            //        310.00,
-            //        DateTime.Parse("2024-10-23 16:42:00")
-            //    ),
-            //};
-            //stockDAL.WriteStocks(values, "META");
             return stockDAL.GetStockNames();
+        }
+
+        private static double GetHighValue(double x, double interval, double mS)
+        {
+            double highValue = 0;
+            for (int i = 0; i < 100; i++)
+            {
+                double result = Formula.CalculateFormula(x + (interval / 100 * i), mS) ?? 0;
+                if (result > highValue || i == 1)
+                    highValue = result;
+            }
+            return highValue;
+        }
+
+        private static double GetLowValue(double x, double interval, double mS)
+        {
+            double lowValue = 0;
+            for (int i = 0; i < 100; i++)
+            {
+                double result = Formula.CalculateFormula(x + (interval / 100 * i), mS) ?? 0;
+                if (result < lowValue || i == 1)
+                    lowValue = result;
+            }
+            return lowValue;
         }
     }
 }

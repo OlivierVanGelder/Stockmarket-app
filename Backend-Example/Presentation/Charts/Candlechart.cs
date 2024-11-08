@@ -1,5 +1,9 @@
-﻿using Backend_Example.Logic.Classes;
+﻿using System.Net.WebSockets;
+using System.Text;
+using System.Text.Json;
+using Backend_Example.Logic.Classes;
 using Backend_Example.Logic.Stocks;
+using DAL.BDaccess;
 
 namespace Backend_Example.Charts
 {
@@ -11,17 +15,12 @@ namespace Backend_Example.Charts
                     "/candlestock",
                     (string ticker, double interval, double start, double end) =>
                     {
-                        CandleStock stock = new();
-                        Ticker tickerConverter = new();
-                        double mS = tickerConverter.ConvertWordToNumber(ticker) + 1;
-                        double startX = start;
-                        double endX = end;
-
                         CandleItem[] results = CandleStock.GetCandleValues(
-                            mS,
-                            startX,
-                            endX,
-                            interval
+                            ticker,
+                            start,
+                            end,
+                            interval,
+                            new StockDAL()
                         );
 
                         return results;

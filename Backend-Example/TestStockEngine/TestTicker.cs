@@ -19,7 +19,7 @@ namespace TestStockEngine
         public void TestConvertWordToNumber(string tickername, int expected)
         {
             // Arrange
-            Ticker ticker = new Ticker();
+            Converter ticker = new Converter();
 
             // Act
             int result = ticker.ConvertWordToNumber(tickername);

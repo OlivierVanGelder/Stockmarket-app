@@ -4,26 +4,8 @@ import LineChart from "../components/LineChart";
 import CandleStickChart from "../components/CandleStickChart";
 import CandleItem from "../CandleItem";
 import ToggleButtonNotEmpty from "../components/ToggleButton";
-
-async function fetchStockData(
-  ticker: string,
-  interval: number = 1,
-  startDay: number,
-  endDay: number
-): Promise<any> {
-  try {
-    const response = await fetch(
-      `https://localhost:42069/stock?ticker=${ticker}&interval=${interval}&start=${startDay}&end=${endDay}`
-    );
-    if (!response.ok) {
-      throw new Error("Failed to fetch stock data");
-    }
-    return await response.json();
-  } catch (error) {
-    console.error(`Error fetching data for ${ticker}:`, error);
-    return null;
-  }
-}
+import { start } from "repl";
+import { Console } from "console";
 
 async function fetchStockNames(): Promise<string[]> {
   try {
@@ -38,21 +20,15 @@ async function fetchStockNames(): Promise<string[]> {
   }
 }
 
-async function fetchCandleStockData(
-  ticker: string,
-  interval: number = 1,
-  startDay: number,
-  endDay: number
-): Promise<CandleItem[]> {
-  try {
-    const response = await fetch(
-      `https://localhost:42069/candlestock?ticker=${ticker}&interval=${interval}&start=${startDay}&end=${endDay}`
-    ).then((res) => res.json());
-    return response;
-  } catch (error) {
-    console.error(`Error fetching data for ${ticker}:`, error);
-    return [];
-  }
+function convertToDays(date: Date): number {
+  const referenceDate = new Date("2024-11-01T12:00:00Z");
+
+  const diffInMs = date.getTime() - referenceDate.getTime();
+
+  // Convert the difference from milliseconds to days
+  const diffInDays = diffInMs / (1000 * 60 * 60 * 24); // 1000 ms * 60 s * 60 min * 24 hrs
+
+  return parseFloat(diffInDays.toFixed(10));
 }
 
 function extractData(
@@ -61,7 +37,7 @@ function extractData(
   startDay: number
 ) {
   const labels: string[] = [];
-  const baseDate = new Date("1980-01-01T12:00:00");
+  const baseDate = new Date("2024-11-01T12:00:00");
 
   for (let i = 0; i < stockAmount; i++) {
     const totalIncrement = i * interval + startDay;
@@ -87,11 +63,12 @@ function extractData(
 function Graphs() {
   const [candleSelected, setCandleSelected] = useState<boolean>(false);
   const [ticker, setTicker] = useState<string>("AAPL");
-  const tickerRef = useRef(ticker);
   const [candleData, setCandleData] = useState<CandleDataItem[]>([]);
   const [interval, setInterval] = useState<number>(1 / 24);
-  const [startDay, setStartDay] = useState<number>(15993);
-  const [endDay, setEndDay] = useState<number>(16000);
+  const [startDay, setStartDay] = useState<string>("all");
+  const tickerRef = useRef(ticker);
+  const intervalRef = useRef(interval);
+  const startDayRef = useRef(startDay);
   const [chartData, setUserData] = useState<{
     labels: string[];
     datasets: any[];
@@ -114,17 +91,56 @@ function Graphs() {
   }, [ticker]);
 
   useEffect(() => {
+    intervalRef.current = interval;
+  }, [interval]);
+
+  useEffect(() => {
+    startDayRef.current = startDay;
+  }, [startDay]);
+
+  useEffect(() => {
     const newSocket = new WebSocket(`wss://localhost:42069/stockWS`);
 
     newSocket.onopen = () => {
       console.log("Connected to websocket");
+      const currentDate = new Date();
+      var startTime: number = 0;
+      switch (startDay) {
+        case "hour":
+          currentDate.setHours(currentDate.getHours() - 1);
+          break;
+        case "hours":
+          currentDate.setHours(currentDate.getHours() - 6);
+          break;
+        case "day":
+          currentDate.setDate(currentDate.getDay() - 1);
+          break;
+        case "week":
+          currentDate.setDate(currentDate.getDay() - 7);
+          break;
+        case "month":
+          currentDate.setMonth(currentDate.getMonth() - 1);
+          break;
+        case "year":
+          currentDate.setFullYear(currentDate.getFullYear() - 1);
+          break;
+        case "all":
+          currentDate.setFullYear(currentDate.getFullYear() - 100);
+          break;
+      }
+      startTime = convertToDays(currentDate);
+      if (startTime < 0) {
+        startTime = 0;
+      }
+      const endDay = convertToDays(new Date());
       if (candleSelected) {
         newSocket.send(
-          JSON.stringify(`${ticker}-${interval}-${startDay}-${endDay}-candle`)
+          JSON.stringify(`${ticker}-${interval}-${startTime}-${endDay}-candle`)
         );
+        console.log(`${ticker}-${interval}-${startTime}-${endDay}-candle`);
       } else if (!candleSelected) {
         newSocket.send(
-          JSON.stringify(`${ticker}-${interval}-${startDay}-${endDay}`)
+          JSON.stringify(`${ticker}-${interval}-${startTime}-${endDay}`)
         );
       }
     };
@@ -133,20 +149,51 @@ function Graphs() {
       const newData = JSON.parse(event.data);
       console.log("Received data:", newData);
       const tickerValue = tickerRef.current;
-
+      const intervalValue = intervalRef.current;
+      const startDayValue = startDayRef.current;
+      const currentDate = new Date();
+      var startTime: number = 0;
+      switch (startDay) {
+        case "hour":
+          currentDate.setHours(currentDate.getHours() - 1);
+          break;
+        case "hours":
+          currentDate.setHours(currentDate.getHours() - 6);
+          break;
+        case "day":
+          currentDate.setDate(currentDate.getDay() - 1);
+          break;
+        case "week":
+          currentDate.setDate(currentDate.getDay() - 7);
+          break;
+        case "month":
+          currentDate.setMonth(currentDate.getMonth() - 1);
+          break;
+        case "year":
+          currentDate.setFullYear(currentDate.getFullYear() - 1);
+          break;
+        case "all":
+          currentDate.setFullYear(currentDate.getFullYear() - 100);
+          break;
+      }
+      startTime = convertToDays(currentDate);
+      if (startTime < 0) {
+        startTime = 0;
+      }
+      const endDay = convertToDays(new Date());
       if (candleSelected) {
         ApplyCandleData(
           tickerValue,
           interval,
-          startDay,
+          startTime,
           setCandleData,
           newData
         );
       } else {
         applyLineData(
           tickerValue,
-          interval,
-          startDay,
+          intervalValue,
+          startTime,
           endDay,
           setUserData,
           ["rgb(242, 139, 130)"],
@@ -160,7 +207,7 @@ function Graphs() {
     return () => {
       newSocket.close();
     };
-  }, [interval, startDay, endDay, candleSelected, ticker]);
+  }, [interval, startDay, candleSelected, ticker]);
 
   async function applyLineData(
     ticker: string,
@@ -251,27 +298,29 @@ function Graphs() {
       </select>
 
       <select
-        value={interval}
+        value={startDayRef.current}
         onChange={(e) => {
-          const value: number = parseInt(e.target.value);
+          const value: string = e.target.value;
           setStartDay(value);
         }}
       >
-        <option value={16000 - 0.04166666667}>{"1 hour"}</option>
-        <option value={15999}>{"1 day"}</option>
-        <option value={15993}>{"1 week"}</option>
-        <option value={15969}>{"1 month"}</option>
-        <option value={15635}>{"1 year"}</option>
-        <option value={0}>{"all"}</option>
+        <option value={"hour"}>{"1 hour"}</option>
+        <option value={"hours"}>{"6 hour"}</option>
+        <option value={"day"}>{"1 day"}</option>
+        <option value={"week"}>{"1 week"}</option>
+        <option value={"month"}>{"1 month"}</option>
+        <option value={"year"}>{"1 year"}</option>
+        <option value={"all"}>{"all"}</option>
       </select>
 
       <select
-        value={interval}
+        value={intervalRef.current}
         onChange={(e) => {
-          const value: number = parseInt(e.target.value);
+          const value: number = parseFloat(e.target.value);
           setInterval(value);
         }}
       >
+        <option value={182.625}>{"6 months"}</option>
         <option value={7}>{"1 week"}</option>
         <option value={1}>{"1 day"}</option>
         <option value={0.04166666667}>{"1 hour"}</option>
