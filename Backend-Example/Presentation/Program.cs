@@ -1,5 +1,5 @@
 using Backend_Example;
-using Backend_Example.Charts;
+using Backend_Example.Controllers;
 using Backend_Example.Functions;
 using Backend_Example.Logic.Classes;
 using DAL.BDaccess;
@@ -22,12 +22,22 @@ builder.Services.AddCors(policyBuilder =>
 StockDAL stockDAL = new StockDAL();
 
 //StockWritingInterval stockWritingInterval = new StockWritingInterval(20, stockDAL);
+
 //StockDeletingInterval stockDeletingInterval = new StockDeletingInterval(5, stockDAL);
 
 var app = builder.Build();
 
-app.UseCors();
-app.UseWebSockets();
+app.UseCors(policy =>
+{
+    policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+});
+
+app.UseWebSockets(
+    new WebSocketOptions
+    {
+        KeepAliveInterval = TimeSpan.FromSeconds(120), // Adjust as needed
+    }
+);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -41,5 +51,6 @@ app.UseHttpsRedirection();
 app.GetLineStock();
 app.GetCandleStock();
 app.GetStockNames();
+app.GetStockWS();
 
 app.Run();

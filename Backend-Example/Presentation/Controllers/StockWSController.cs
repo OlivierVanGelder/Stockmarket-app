@@ -5,47 +5,31 @@ using Backend_Example.Data.BDaccess;
 using Backend_Example.Logic.Classes;
 using Backend_Example.Logic.Stocks;
 using DAL.BDaccess;
-using Logic.Interfaces;
 
-namespace Backend_Example.Charts
+namespace Backend_Example.Controllers
 {
-    public static class LineChart
+    public static class StockWScontroller
     {
-        public static void GetLineStock(this WebApplication app)
+        public static void GetStockWS(this WebApplication app)
         {
-            app.MapGet(
-                    "/lineStock",
-                    (string ticker, double interval, double start, double end) =>
+            app.Map(
+                    "/stockWS",
+                    async (HttpContext context) =>
                     {
-                        LineStock stock = new();
-                        double mS = Converter.ConvertWordToNumber(ticker) + 1;
-                        double startX = start;
-                        double endX = end;
-
-                        double[] results = stock.GetValues(mS, startX, endX, interval);
-
-                        return results;
+                        if (context.WebSockets.IsWebSocketRequest)
+                        {
+                            using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                            await ProvideStock(webSocket);
+                            return Results.Ok();
+                        }
+                        else
+                        {
+                            return Results.BadRequest();
+                        }
                     }
                 )
-                .WithName("GetStockFromTicker")
+                .WithName("StockWS")
                 .WithOpenApi();
-
-            app.Map(
-                "/stockWS",
-                async (HttpContext context) =>
-                {
-                    if (context.WebSockets.IsWebSocketRequest)
-                    {
-                        using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                        await ProvideStock(webSocket);
-                        return Results.Ok();
-                    }
-                    else
-                    {
-                        return Results.BadRequest();
-                    }
-                }
-            );
         }
 
         private static async Task ProvideStock(WebSocket webSocket)

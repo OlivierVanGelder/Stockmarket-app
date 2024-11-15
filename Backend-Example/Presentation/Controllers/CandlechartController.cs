@@ -1,13 +1,10 @@
-﻿using System.Net.WebSockets;
-using System.Text;
-using System.Text.Json;
-using Backend_Example.Logic.Classes;
+﻿using Backend_Example.Logic.Classes;
 using Backend_Example.Logic.Stocks;
 using DAL.BDaccess;
 
-namespace Backend_Example.Charts
+namespace Backend_Example.Controllers
 {
-    public static class Candlechart
+    public static class CandlechartController
     {
         public static void GetCandleStock(this WebApplication app)
         {

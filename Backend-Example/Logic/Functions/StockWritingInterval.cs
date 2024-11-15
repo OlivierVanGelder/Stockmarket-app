@@ -12,7 +12,7 @@ namespace Logic.Functions
         {
             _timer = new System.Timers.Timer(intervalInSeconds * 1000);
             _timer.Elapsed += (sender, e) => WriteStocks(StockDAL);
-            _timer.AutoReset = true;
+            _timer.AutoReset = false;
             _timer.Enabled = true;
         }
 
@@ -46,6 +46,7 @@ namespace Logic.Functions
                     0.00069444444
                 );
                 StockDAL.WriteStocks(newStock, name);
+                StockDAL.DeleteDuplicateStocks();
             }
         }
     }

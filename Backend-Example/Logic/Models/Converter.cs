@@ -11,7 +11,7 @@
 
         public static DateTime ConvertDigitToDate(double x)
         {
-            DateTime baseDate = new DateTime(2024, 11, 1, 12, 0, 0); // Base date set to 1980-01-01T12:00:00
+            DateTime baseDate = new DateTime(2020, 11, 1, 12, 0, 0);
             double totalIncrement = x;
             DateTime currentDate = baseDate;
             currentDate = currentDate.AddDays(Math.Floor(totalIncrement));
@@ -29,7 +29,7 @@
 
         public static double ConvertDateToDigit(DateTime dateTime)
         {
-            DateTime baseDate = new DateTime(2024, 11, 1, 12, 0, 0);
+            DateTime baseDate = new DateTime(2020, 11, 1, 12, 0, 0);
 
             TimeSpan timeDifference = dateTime - baseDate;
             double totalDays = timeDifference.TotalDays;

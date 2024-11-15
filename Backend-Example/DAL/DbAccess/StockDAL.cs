@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Backend_Example.Data.BDaccess;
-using Backend_Example.Data.Models;
+﻿using Backend_Example.Data.BDaccess;
 using Backend_Example.Logic.Classes;
 using Logic.Interfaces;
 
@@ -18,7 +14,7 @@ namespace DAL.BDaccess
                 var dates = candle.Select(c => c.Date).AsEnumerable();
 
                 // Now apply DefaultIfEmpty to ensure a default value if no data is returned
-                return dates.DefaultIfEmpty(new DateTime(2024, 11, 1, 12, 0, 0)).Max();
+                return dates.DefaultIfEmpty(new DateTime(2020, 11, 1, 12, 0, 0)).Max();
             }
         }
 
@@ -117,7 +113,11 @@ namespace DAL.BDaccess
                                 high: combinedHigh,
                                 low: combinedLow,
                                 volume: combinedVolume,
-                                date: currentIntervalStart
+                                date: new DateTime(
+                                    (currentIntervalStart.Ticks + TimeSpan.TicksPerMinute / 2)
+                                        / TimeSpan.TicksPerMinute
+                                        * TimeSpan.TicksPerMinute
+                                )
                             )
                         );
                     }
