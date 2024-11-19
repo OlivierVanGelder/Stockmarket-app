@@ -48,9 +48,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.GetLineStock();
-app.GetCandleStock();
-app.GetStockNames();
-app.GetStockWS();
+app.ManagerUIcontroller();
 
 app.Run();

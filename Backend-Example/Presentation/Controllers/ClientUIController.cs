@@ -1,17 +1,43 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using Backend_Example.Data.BDaccess;
 using Backend_Example.Logic.Classes;
 using Backend_Example.Logic.Stocks;
 using DAL.BDaccess;
 
 namespace Backend_Example.Controllers
 {
-    public static class StockWScontroller
+    public static class ClientUIController
     {
-        public static void GetStockWS(this WebApplication app)
+        public static void ClientUIcontroller(this WebApplication app)
         {
+            app.MapGet(
+                    "/stocknames",
+                    () =>
+                    {
+                        StockDAL stockDAL = new StockDAL();
+
+                        return CandleStock.GetStockNames(stockDAL);
+                    }
+                )
+                .WithName("GetStockNames")
+                .WithOpenApi();
+            app.MapGet(
+                    "/lineStock",
+                    (string ticker, double interval, double start, double end) =>
+                    {
+                        LineStock stock = new();
+                        double mS = Converter.ConvertWordToNumber(ticker) + 1;
+                        double startX = start;
+                        double endX = end;
+
+                        double[] results = stock.GetValues(mS, startX, endX, interval);
+
+                        return results;
+                    }
+                )
+                .WithName("GetStockFromTicker")
+                .WithOpenApi();
             app.Map(
                     "/stockWS",
                     async (HttpContext context) =>
@@ -29,6 +55,23 @@ namespace Backend_Example.Controllers
                     }
                 )
                 .WithName("StockWS")
+                .WithOpenApi();
+            app.MapGet(
+                    "/candlestock",
+                    (string ticker, double interval, double start, double end) =>
+                    {
+                        CandleItem[] results = CandleStock.GetCandleValues(
+                            ticker,
+                            start,
+                            end,
+                            interval,
+                            new StockDAL()
+                        );
+
+                        return results;
+                    }
+                )
+                .WithName("GetCandleStockFromTicker")
                 .WithOpenApi();
         }
 

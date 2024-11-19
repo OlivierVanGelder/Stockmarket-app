@@ -1,17 +1,14 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import '../App.css'
 import LineChart from '../components/LineChart'
 import CandleStickChart from '../components/CandleStickChart'
 import ToggleButtonNotEmpty from '../components/ToggleButton'
 import Interval from '../Interval'
-import { start } from 'repl'
 
 async function fetchStockNames(): Promise<string[]> {
     try {
         const response = await fetch('https://localhost:42069/stocknames')
-        if (!response.ok) {
-            throw new Error('Failed to fetch stock names')
-        }
+        if (!response.ok) throw new Error('Failed to fetch stock names')
         return await response.json()
     } catch (error) {
         console.error('Error fetching stock names:', error)
@@ -21,18 +18,23 @@ async function fetchStockNames(): Promise<string[]> {
 
 function convertToDays(date: Date): number {
     const referenceDate = new Date('2020-11-01T12:00:00Z')
+    return parseFloat(
+        (
+            (date.getTime() - referenceDate.getTime()) /
+            (1000 * 60 * 60 * 24)
+        ).toFixed(10)
+    )
+}
 
-    const diffInMs = date.getTime() - referenceDate.getTime()
-
-    // Convert the difference from milliseconds to days
-    const diffInDays = diffInMs / (1000 * 60 * 60 * 24) // 1000 ms * 60 s * 60 min * 24 hrs
-
-    return parseFloat(diffInDays.toFixed(10))
+interface CandleDataItem {
+    x: Date
+    y: [number, number, number, number]
+    volume: number
 }
 
 function Graphs() {
     const [candleSelected, setCandleSelected] = useState<boolean>(false)
-    const [ticker, setTicker] = useState<string>('AAPL')
+    const [ticker, setTicker] = useState<string>('APPL')
     const [candleData, setCandleData] = useState<CandleDataItem[]>([])
     const [interval, setInterval] = useState<number>(1 / 24)
     const [startTimeString, setStartDay] = useState<string>('all')
@@ -43,7 +45,7 @@ function Graphs() {
         labels: [],
         datasets: []
     })
-    const [stocknames, setStockNames] = useState<string[]>([])
+    const [stockNames, setStockNames] = useState<string[]>([])
     const [intervalOptions, setIntervalOptions] = useState<Interval[]>([
         new Interval(7, '1 week')
     ])
@@ -52,229 +54,182 @@ function Graphs() {
         []
     )
 
+    // Fetch stock names when the component mounts
     useEffect(() => {
-        const fetchData = async () => {
-            setStockNames(await fetchStockNames())
-        }
-        fetchData()
+        fetchStockNames().then(setStockNames)
     }, [])
 
+    // Update interval options based on start time selection
     useEffect(() => {
-        let newIntervalOptions: Interval[] = []
-        switch (startTimeString) {
-            case 'hour':
-                newIntervalOptions = [new Interval(0.0006944444444, '1 min')]
-                break
-            case 'hours':
-                newIntervalOptions = [
-                    new Interval(0.0006944444444, '1 min'),
-                    new Interval(0.033333333333, '30 min'),
-                    new Interval(0.04166666667, '1 hour')
-                ]
-                break
-            case 'day':
-                newIntervalOptions = [
-                    new Interval(0.033333333333, '30 min'),
-                    new Interval(0.04166666667, '1 hour')
-                ]
-                break
-            case 'week':
-                newIntervalOptions = [
-                    new Interval(0.04166666667, '1 hour'),
-                    new Interval(0.5, '12 hours'),
-                    new Interval(1, '1 day')
-                ]
-                break
-            case 'month':
-                newIntervalOptions = [
-                    new Interval(0.04166666667, '1 hour'),
-                    new Interval(0.5, '12 hours'),
-                    new Interval(1, '1 day')
-                ]
-                break
-            case 'year':
-                newIntervalOptions = [
-                    new Interval(1, '1 day'),
-                    new Interval(7, '1 week')
-                ]
-                break
-            case 'all':
-                newIntervalOptions = [new Interval(7, '1 week')]
-                break
+        const options: Record<string, Interval[]> = {
+            hour: [new Interval(0.0006944444444, '1 min')],
+            hours: [
+                new Interval(0.0006944444444, '1 min'),
+                new Interval(0.033333333333, '30 min'),
+                new Interval(0.04166666667, '1 hour')
+            ],
+            day: [
+                new Interval(0.033333333333, '30 min'),
+                new Interval(0.04166666667, '1 hour')
+            ],
+            week: [
+                new Interval(0.04166666667, '1 hour'),
+                new Interval(0.5, '12 hours'),
+                new Interval(1, '1 day')
+            ],
+            month: [
+                new Interval(0.04166666667, '1 hour'),
+                new Interval(0.5, '12 hours'),
+                new Interval(1, '1 day')
+            ],
+            year: [new Interval(1, '1 day'), new Interval(7, '1 week')],
+            all: [new Interval(7, '1 week')]
         }
-
-        setIntervalOptions(newIntervalOptions)
-        if (newIntervalOptions.length > 0) {
-            setInterval(newIntervalOptions[newIntervalOptions.length - 1].value)
-        }
+        const newOptions = options[startTimeString] || []
+        setIntervalOptions(newOptions)
+        if (newOptions.length)
+            setInterval(newOptions[newOptions.length - 1].value)
     }, [startTimeString])
 
+    // Handle sending data requests over WebSocket
     useEffect(() => {
         const sendMessage = () => {
             const currentDate = new Date()
-            let startTime: number = 0
-            switch (
-                startTimeString
-                // Same switch cases as before...
-            ) {
+            switch (startTimeString) {
+                case 'hour':
+                    currentDate.setHours(currentDate.getHours() - 1)
+                    break
+                case 'hours':
+                    currentDate.setHours(currentDate.getHours() - 6)
+                    break
+                case 'day':
+                    currentDate.setDate(currentDate.getDate() - 1)
+                    break
+                case 'week':
+                    currentDate.setDate(currentDate.getDate() - 7)
+                    break
+                case 'month':
+                    currentDate.setMonth(currentDate.getMonth() - 1)
+                    break
+                case 'year':
+                    currentDate.setFullYear(currentDate.getFullYear() - 1)
+                    break
+                case 'all':
+                    currentDate.setFullYear(currentDate.getFullYear() - 100)
+                    break
             }
-            startTime = convertToDays(currentDate)
-            if (startTime < 0) {
-                startTime = 0
-            }
+            let startTime = convertToDays(currentDate)
+            startTime = Math.max(startTime, 0)
+
             const endDay = convertToDays(new Date())
             if ((endDay - startTime) / interval > 1000) {
                 setInterval(intervalOptions[intervalOptions.length - 1].value)
             }
-            if (candleSelected) {
-                socket.send(
-                    JSON.stringify(
-                        `${ticker}-${interval}-${startTime}-${endDay}-candle`
-                    )
-                )
-                console.log(
-                    `${ticker}-${interval}-${startTime}-${endDay}-candle`
-                )
-                console.log(currentDate)
-            } else {
-                socket.send(
-                    JSON.stringify(
-                        `${ticker}-${interval}-${startTime}-${endDay}`
-                    )
-                )
-            }
+            const message = candleSelected
+                ? `${ticker}-${interval}-${startTime}-${endDay}-candle`
+                : `${ticker}-${interval}-${startTime}-${endDay}`
+
+            socket.send(JSON.stringify(message))
         }
 
-        if (socket.readyState === socket.OPEN) sendMessage()
-        else socket.onopen = sendMessage
+        if (socket.readyState === WebSocket.OPEN) {
+            sendMessage()
+        } else {
+            socket.onopen = sendMessage
+        }
 
         socket.onmessage = event => {
             const newData = JSON.parse(event.data)
-            console.log('Received data:', newData)
             if (candleSelected) {
-                ApplyCandleData(setCandleData, newData)
+                applyCandleData(newData)
             } else {
-                applyLineData(
-                    ticker,
-                    setUserData,
-                    ['rgb(242, 139, 130)'],
-                    newData
-                )
+                applyLineData(ticker, newData)
             }
         }
     }, [interval, startTimeString, candleSelected, ticker])
 
-    async function applyLineData(
-        ticker: string,
-        setUserData: React.Dispatch<
-            React.SetStateAction<{ labels: string[]; datasets: any[] }>
-        >,
-        color: string[],
-        newStockData: any
-    ) {
-        if (newStockData) {
-            const extractedData = newStockData
-                .map((item: any) => item.date)
-                .toString()
-                .slice(0, 16)
+    const applyLineData = useCallback((ticker: string, data: any) => {
+        if (data) {
+            const labels = data.map((item: any) => item.date).slice(0, 16)
             setUserData({
-                labels: extractedData,
+                labels,
                 datasets: [
                     {
                         label: `Stock Price for ${ticker}`,
-                        data: newStockData,
-                        backgroundColor: color,
-                        borderColor: color
+                        data,
+                        backgroundColor: 'rgb(242, 139, 130)',
+                        borderColor: 'rgb(242, 139, 130)'
                     }
                 ]
             })
         }
-    }
+    }, [])
 
-    interface CandleDataItem {
-        x: Date
-        y: [open: number, high: number, low: number, close: number]
-        volume: number
-    }
-
-    async function ApplyCandleData(
-        setCandleData: React.Dispatch<React.SetStateAction<CandleDataItem[]>>,
-        newCandleData: any
-    ) {
-        // Check if newCandleData is an array and has valid data
-        if (!Array.isArray(newCandleData) || newCandleData.length === 0) {
-            console.error('Invalid candle data received:', newCandleData)
-            return // Exit if data is invalid
+    const applyCandleData = useCallback((data: any) => {
+        if (!Array.isArray(data) || !data.length) {
+            console.error('Invalid candle data received:', data)
+            return
         }
+        const formattedData: CandleDataItem[] = data.map((item: any) => ({
+            x: new Date(item.Date),
+            y: [item.Open, item.High, item.Low, item.Close],
+            volume: item.Volume
+        }))
+        setCandleData(formattedData)
+    }, [])
 
-        const candleData = newCandleData.reduce<CandleDataItem[]>(
-            (acc, item, index) => {
-                if (item && typeof item === 'object') {
-                    acc.push({
-                        x: item.Date, // Use the corresponding date
-                        y: [item.Open, item.High, item.Low, item.Close],
-                        volume: item.Volume
-                    })
-                } else {
-                    console.error('Invalid candle item format:', item)
-                }
-                return acc
-            },
-            []
-        ) // Start with an empty array
-        setCandleData(candleData)
-    }
+    // Render options outside of JSX for readability
+    const startTimeOptions = [
+        'hour',
+        'hours',
+        'day',
+        'week',
+        'month',
+        'year',
+        'all'
+    ].map(option => (
+        <option
+            key={option}
+            value={option}
+        >{`${option[0].toUpperCase()}${option.slice(1)}`}</option>
+    ))
 
     return (
         <div>
-            <select
-                value={ticker}
-                onChange={e => {
-                    const value: string = e.target.value.toString()
-                    setTicker(value)
-                }}
-            >
-                {stocknames.map((element, index) => (
-                    <option key={index} value={element}>
-                        {element}
+            <select value={ticker} onChange={e => setTicker(e.target.value)}>
+                {stockNames.map((name, index) => (
+                    <option key={index} value={name}>
+                        {name}
                     </option>
                 ))}
             </select>
 
             <select
                 value={startTimeString}
-                onChange={e => {
-                    const value: string = e.target.value
-                    setStartDay(value)
-                }}
+                onChange={e => setStartDay(e.target.value)}
             >
-                <option value={'hour'}>{'1 hour'}</option>
-                <option value={'hours'}>{'6 hour'}</option>
-                <option value={'day'}>{'1 day'}</option>
-                <option value={'week'}>{'1 week'}</option>
-                <option value={'month'}>{'1 month'}</option>
-                <option value={'year'}>{'1 year'}</option>
-                <option value={'all'}>{'all'}</option>
+                {startTimeOptions}
             </select>
 
             <select
                 value={interval}
-                onChange={e => {
-                    const value: number = parseFloat(e.target.value)
-                    setInterval(value)
-                }}
+                onChange={e => setInterval(parseFloat(e.target.value))}
             >
-                {intervalOptions.map((interval, index) => (
-                    <option key={index} value={interval.value}>
-                        {interval.element}
+                {intervalOptions.map((opt, index) => (
+                    <option key={index} value={opt.value}>
+                        {opt.element}
                     </option>
                 ))}
             </select>
+
             <ToggleButtonNotEmpty
                 candleSelected={candleSelected}
                 setCandleSelected={setCandleSelected}
             />
-            {!candleSelected ? (
+
+            {candleSelected ? (
+                <CandleStickChart dataset={candleData} />
+            ) : (
                 <div
                     style={{
                         width: 1200,
@@ -284,8 +239,6 @@ function Graphs() {
                 >
                     <LineChart chartData={chartData} />
                 </div>
-            ) : (
-                <CandleStickChart dataset={candleData} />
             )}
         </div>
     )
