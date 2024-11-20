@@ -19,6 +19,12 @@ namespace Logic.Interfaces
             DateTime endDate,
             TimeSpan interval
         );
+        LineItem[] GetLineValues(
+            string stockname,
+            DateTime startDate,
+            DateTime endDate,
+            TimeSpan interval
+        );
         DateTime GetLastStockDate();
     }
 }

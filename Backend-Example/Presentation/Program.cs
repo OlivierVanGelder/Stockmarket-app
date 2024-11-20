@@ -1,6 +1,5 @@
 using Backend_Example;
 using Backend_Example.Controllers;
-using Backend_Example.Functions;
 using Backend_Example.Logic.Classes;
 using DAL.BDaccess;
 using Logic.Functions;
@@ -48,6 +47,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.ManagerUIcontroller();
+app.ClientUIcontroller();
 
 app.Run();

@@ -7,7 +7,7 @@ import Interval from '../Interval'
 
 async function fetchStockNames(): Promise<string[]> {
     try {
-        const response = await fetch('https://localhost:42069/stocknames')
+        const response = await fetch('https://localhost:42069/stocks/names')
         if (!response.ok) throw new Error('Failed to fetch stock names')
         return await response.json()
     } catch (error) {
@@ -34,6 +34,7 @@ interface CandleDataItem {
 
 function Graphs() {
     const [candleSelected, setCandleSelected] = useState<boolean>(false)
+    const [invalidData, setInvalidData] = useState<boolean>(false)
     const [ticker, setTicker] = useState<string>('APPL')
     const [candleData, setCandleData] = useState<CandleDataItem[]>([])
     const [interval, setInterval] = useState<number>(1 / 24)
@@ -60,6 +61,7 @@ function Graphs() {
     }, [])
 
     // Update interval options based on start time selection
+    // Handle sending data requests over WebSocket
     useEffect(() => {
         const options: Record<string, Interval[]> = {
             hour: [new Interval(0.0006944444444, '1 min')],
@@ -83,16 +85,19 @@ function Graphs() {
                 new Interval(1, '1 day')
             ],
             year: [new Interval(1, '1 day'), new Interval(7, '1 week')],
-            all: [new Interval(7, '1 week')]
+            all: [new Interval(30, '30 days'), new Interval(365, '1 year')]
         }
         const newOptions = options[startTimeString] || []
         setIntervalOptions(newOptions)
-        if (newOptions.length)
-            setInterval(newOptions[newOptions.length - 1].value)
-    }, [startTimeString])
+        if (
+            newOptions.length &&
+            !newOptions.some(opt => opt.value === interval)
+        ) {
+            const newInterval = newOptions[newOptions.length - 1].value
+            setInterval(newInterval)
+            return
+        }
 
-    // Handle sending data requests over WebSocket
-    useEffect(() => {
         const sendMessage = () => {
             const currentDate = new Date()
             switch (startTimeString) {
@@ -149,8 +154,10 @@ function Graphs() {
     }, [interval, startTimeString, candleSelected, ticker])
 
     const applyLineData = useCallback((ticker: string, data: any) => {
-        if (data) {
-            const labels = data.map((item: any) => item.date).slice(0, 16)
+        const labels = data.map((item: any) => item.Date)
+        if (labels.length != 0) {
+            setInvalidData(false)
+            data = data.map((item: any) => item.Value)
             setUserData({
                 labels,
                 datasets: [
@@ -162,14 +169,18 @@ function Graphs() {
                     }
                 ]
             })
+        } else {
+            setInvalidData(true)
         }
     }, [])
 
     const applyCandleData = useCallback((data: any) => {
         if (!Array.isArray(data) || !data.length) {
+            setInvalidData(true)
             console.error('Invalid candle data received:', data)
             return
         }
+        setInvalidData(false)
         const formattedData: CandleDataItem[] = data.map((item: any) => ({
             x: new Date(item.Date),
             y: [item.Open, item.High, item.Low, item.Close],
@@ -196,48 +207,72 @@ function Graphs() {
 
     return (
         <div>
-            <select value={ticker} onChange={e => setTicker(e.target.value)}>
-                {stockNames.map((name, index) => (
-                    <option key={index} value={name}>
-                        {name}
-                    </option>
-                ))}
-            </select>
+            <div className="select-group">
+                <div className="select-item">
+                    <p className="select-label">Stock:</p>
+                    <select
+                        id="stock-select"
+                        value={ticker}
+                        onChange={e => setTicker(e.target.value)}
+                    >
+                        {stockNames.map((name, index) => (
+                            <option key={index} value={name}>
+                                {name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
 
-            <select
-                value={startTimeString}
-                onChange={e => setStartDay(e.target.value)}
-            >
-                {startTimeOptions}
-            </select>
+                <div className="select-item">
+                    <p className="select-label">Start Time:</p>
+                    <select
+                        id="start-time-select"
+                        value={startTimeString}
+                        onChange={e => setStartDay(e.target.value)}
+                    >
+                        {startTimeOptions}
+                    </select>
+                </div>
 
-            <select
-                value={interval}
-                onChange={e => setInterval(parseFloat(e.target.value))}
-            >
-                {intervalOptions.map((opt, index) => (
-                    <option key={index} value={opt.value}>
-                        {opt.element}
-                    </option>
-                ))}
-            </select>
+                <div className="select-item">
+                    <p className="select-label">Interval:</p>
+                    <select
+                        id="interval-select"
+                        value={interval}
+                        onChange={e => setInterval(parseFloat(e.target.value))}
+                    >
+                        {intervalOptions.map((opt, index) => (
+                            <option key={index} value={opt.value}>
+                                {opt.element}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </div>
 
             <ToggleButtonNotEmpty
                 candleSelected={candleSelected}
                 setCandleSelected={setCandleSelected}
             />
-
-            {candleSelected ? (
-                <CandleStickChart dataset={candleData} />
+            {invalidData ? (
+                <div>
+                    <h1>Invalid Data</h1>
+                </div>
             ) : (
-                <div
-                    style={{
-                        width: 1200,
-                        backgroundColor: '#FFFFFF',
-                        margin: '35px'
-                    }}
-                >
-                    <LineChart chartData={chartData} />
+                <div>
+                    {candleSelected ? (
+                        <CandleStickChart dataset={candleData} />
+                    ) : (
+                        <div
+                            style={{
+                                width: 1200,
+                                backgroundColor: '#FFFFFF',
+                                margin: '35px'
+                            }}
+                        >
+                            <LineChart chartData={chartData} />
+                        </div>
+                    )}
                 </div>
             )}
         </div>

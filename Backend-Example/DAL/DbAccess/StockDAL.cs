@@ -1,4 +1,5 @@
-﻿using Backend_Example.Data.BDaccess;
+﻿using System.Diagnostics;
+using Backend_Example.Data.BDaccess;
 using Backend_Example.Logic.Classes;
 using Logic.Interfaces;
 
@@ -62,71 +63,87 @@ namespace DAL.BDaccess
             TimeSpan interval
         )
         {
-            using (var db = new DbContext())
+            using var db = new DbContext();
+            // Get the stock ID for the specified stockname
+            int stockId = db
+                .Stocks.Where(s => s.Ticker == stockname)
+                .Select(s => s.Id)
+                .FirstOrDefault();
+
+            if (stockId == 0)
             {
-                // Get the stock ID for the specified stockname
-                int stockId = db
-                    .Stocks.Where(s => s.Ticker == stockname)
-                    .Select(s => s.Id)
-                    .FirstOrDefault();
-
-                if (stockId == 0)
-                {
-                    throw new InvalidOperationException("Stock not found");
-                }
-
-                // Query for CandleStockMinute entries within the date range for the given stock
-                var candles = db
-                    .Candles.Where(c =>
-                        c.Stock_Id == stockId && c.Date >= startDate && c.Date <= endDate
-                    )
-                    .OrderBy(c => c.Date)
-                    .ToList();
-
-                // Filter data based on the interval
-                List<CandleItem> filteredCandles = new List<CandleItem>();
-                DateTime currentIntervalStart = startDate;
-
-                while (currentIntervalStart <= endDate)
-                {
-                    var candlesInInterval = candles
-                        .Where(c =>
-                            c.Date >= currentIntervalStart
-                            && c.Date < currentIntervalStart + interval
-                        )
-                        .OrderBy(c => c.Date)
-                        .ToList(); // Get all candles in the interval
-
-                    if (candlesInInterval.Any())
-                    {
-                        // Combine data for the interval
-                        var firstCandle = candlesInInterval.First();
-                        var lastCandle = candlesInInterval.Last();
-                        double combinedHigh = candlesInInterval.Max(c => c.High) / 100.0;
-                        double combinedLow = candlesInInterval.Min(c => c.Low) / 100.0;
-                        double combinedVolume = candlesInInterval.Sum(c => c.Volume) / 100.0;
-
-                        filteredCandles.Add(
-                            new CandleItem(
-                                open: firstCandle.Open / 100.0,
-                                close: lastCandle.Close / 100.0,
-                                high: combinedHigh,
-                                low: combinedLow,
-                                volume: combinedVolume,
-                                date: new DateTime(
-                                    (currentIntervalStart.Ticks + TimeSpan.TicksPerMinute / 2)
-                                        / TimeSpan.TicksPerMinute
-                                        * TimeSpan.TicksPerMinute
-                                )
-                            )
-                        );
-                    }
-
-                    currentIntervalStart += interval; // Move to the next interval
-                }
-
-                return filteredCandles.ToArray();
+                throw new InvalidOperationException("Stock not found");
             }
+
+            // Query for CandleStockMinute entries within the date range for the given stock
+            var candles = db
+                .Candles.Where(c =>
+                    c.Stock_Id == stockId && c.Date >= startDate && c.Date <= endDate
+                )
+                .OrderBy(c => c.Date)
+                .AsEnumerable()
+                .GroupBy(c => c.Date.Ticks / interval.Ticks);
+
+            // Filter data based on the interval
+            List<CandleItem> filteredCandles = new List<CandleItem>();
+
+            foreach (var candleGroup in candles)
+            {
+                var candle = candleGroup.First();
+
+                filteredCandles.Add(
+                    new CandleItem(
+                        open: candle.Open / 100.0,
+                        close: candleGroup.Last().Close / 100.0,
+                        high: candleGroup.Max(c => c.High) / 100.0,
+                        low: candleGroup.Min(c => c.Low) / 100.0,
+                        volume: candle.Volume / 100.0,
+                        date: candle.Date
+                    )
+                );
+            }
+
+            return filteredCandles.ToArray();
+        }
+
+        public LineItem[] GetLineValues(
+            string stockname,
+            DateTime startDate,
+            DateTime endDate,
+            TimeSpan interval
+        )
+        {
+            using var db = new DbContext();
+            // Get the stock ID for the specified stockname
+            int stockId = db
+                .Stocks.Where(s => s.Ticker == stockname)
+                .Select(s => s.Id)
+                .FirstOrDefault();
+
+            if (stockId == 0)
+            {
+                throw new InvalidOperationException("Stock not found");
+            }
+
+            var filteredCandles = db
+                .Candles.Where(c =>
+                    c.Stock_Id == stockId && c.Date >= startDate && c.Date <= endDate
+                )
+                .OrderBy(c => c.Date);
+
+            List<LineItem> values = new List<LineItem>();
+            DateTime currentIntervalStart = startDate;
+
+            foreach (var candle in filteredCandles)
+            {
+                if (candle.Date < currentIntervalStart)
+                    continue;
+
+                values.Add(new LineItem(candle.Date, candle.Open / 100.0));
+                currentIntervalStart += interval;
+            }
+
+            return values.ToArray();
         }
 
         public void DeleteDuplicateStocks()

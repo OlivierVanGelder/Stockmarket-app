@@ -12,7 +12,7 @@ namespace Backend_Example.Controllers
         public static void ClientUIcontroller(this WebApplication app)
         {
             app.MapGet(
-                    "/stocknames",
+                    "/stocks/names",
                     () =>
                     {
                         StockDAL stockDAL = new StockDAL();
@@ -27,11 +27,17 @@ namespace Backend_Example.Controllers
                     (string ticker, double interval, double start, double end) =>
                     {
                         LineStock stock = new();
-                        double mS = Converter.ConvertWordToNumber(ticker) + 1;
-                        double startX = start;
-                        double endX = end;
+                        DateTime startDate = Converter.ConvertDigitToDate(start);
+                        DateTime endDate = Converter.ConvertDigitToDate(end);
+                        TimeSpan intervalSpan = TimeSpan.FromDays(interval);
 
-                        double[] results = stock.GetValues(mS, startX, endX, interval);
+                        LineItem[] results = stock.GetValues(
+                            ticker,
+                            startDate,
+                            endDate,
+                            intervalSpan,
+                            new StockDAL()
+                        );
 
                         return results;
                     }
@@ -89,15 +95,15 @@ namespace Backend_Example.Controllers
                 if (message.Length == 4)
                 {
                     LineStock lineStock = new();
-                    string stock = message[0];
-                    double interval = double.Parse(message[1]);
-                    double startX = double.Parse(message[2]);
-                    double endX = double.Parse(message[3].Replace("\"", ""));
-                    double mS = Converter.ConvertWordToNumber(stock) + 1;
-
-                    double[] results = lineStock.GetValues(mS, startX, endX, interval);
-                    string resultJson = JsonSerializer.Serialize(results);
-
+                    string stock = message[0].Replace("\"", "");
+                    DateTime startDate = Converter.ConvertDigitToDate(double.Parse(message[2]));
+                    DateTime endDate = Converter.ConvertDigitToDate(
+                        double.Parse(message[3].Replace("\"", ""))
+                    );
+                    TimeSpan intervalSpan = TimeSpan.FromDays(double.Parse(message[1]));
+                    string resultJson = JsonSerializer.Serialize(
+                        lineStock.GetValues(stock, startDate, endDate, intervalSpan, new StockDAL())
+                    );
                     byte[] resultBuffer = Encoding.UTF8.GetBytes(resultJson);
 
                     await webSocket.SendAsync(

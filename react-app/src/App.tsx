@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import LineChart from './components/LineChart'
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom'
 import Account from './pages/Account'
 import Graphs from './pages/Graphs'
 import Stock from './pages/Stock'
-import LoginSignup from './components/LoginSignup'
 
 const Home = () => (
     <div>
