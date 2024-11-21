@@ -5,7 +5,7 @@ namespace Backend_Example.Logic.Stocks
 {
     public class LineStock
     {
-        public LineItem[] GetValues(
+        public Task<LineItem[]> GetValues(
             string stockName,
             DateTime startTime,
             DateTime endTime,
@@ -13,7 +13,7 @@ namespace Backend_Example.Logic.Stocks
             StockDALinterface stockDal
         )
         {
-            LineItem[] values = stockDal.GetLineValues(stockName, startTime, endTime, interval);
+            Task<LineItem[]> values = stockDal.GetLineValues(stockName, startTime, endTime, interval);
             return values;
         }
     }

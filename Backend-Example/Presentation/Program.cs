@@ -1,36 +1,44 @@
 using Backend_Example.Controllers;
 using DAL.BDaccess;
+using DAL.Tables;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Authorization;
-using DAL.Tables;
+using Backend_Example.Logic.Stocks;
+using Logic.Interfaces;
+using Microsoft.AspNetCore.WebSockets;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddAuthentication().AddCookie();
+
+builder.Services.AddAuthentication()
+    .AddCookie();
+
 builder.Services.AddAuthorization();
 
-// Temporary CORS policy to allow all origins
-builder.Services.AddCors(policyBuilder =>
-    policyBuilder.AddDefaultPolicy(policy =>
-        policy.WithOrigins("*").AllowAnyHeader().AllowAnyMethod()
-    )
-);
-
+builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<DbContext>();
+builder.Services.AddDbContext<Backend_Example.Data.BDaccess.DbContext>(options =>
+    options.UseSqlServer(connectionString)
+);
 
-builder.Services.AddRazorPages();
+builder.Services.AddIdentity<User, IdentityRole>()
+    .AddEntityFrameworkStores<Backend_Example.Data.BDaccess.DbContext>()
+    .AddDefaultTokenProviders();
 
-builder.Services.AddIdentityApiEndpoints<User>();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", builder =>
+    {
+        builder.WithOrigins("http://localhost:3000")
+               .AllowAnyMethod()
+               .AllowAnyHeader()
+               .AllowCredentials();
+    });
+});
+
 
 builder.Services.Configure<IdentityOptions>(options =>
 {
@@ -42,37 +50,20 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.Password.RequireNonAlphanumeric = false;
 });
 
-var app = builder.Build();
+builder.Services.AddScoped<StockDALinterface, StockDAL>();
+builder.Services.AddScoped<LineStock>();
 
-
-StockDAL stockDAL = new StockDAL();
-
-//StockWritingInterval stockWritingInterval = new StockWritingInterval(20, stockDAL);
-
-//StockDeletingInterval stockDeletingInterval = new StockDeletingInterval(5, stockDAL);
-
-app.MapIdentityApi<User>();
-app.UseHttpsRedirection();
-app.UseStaticFiles();
-
-app.UseRouting();
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.UseCors(policy =>
-{
-    policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-});
-
-app.UseWebSockets(
-    new WebSocketOptions
-    {
-        KeepAliveInterval = TimeSpan.FromSeconds(120), // Adjust as needed
-    }
+builder.Services.AddCors(policyBuilder =>
+    policyBuilder.AddDefaultPolicy(policy =>
+        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()
+    )
 );
 
-// Configure the HTTP request pipeline.
+
+builder.Services.AddWebSockets(options => { });
+
+var app = builder.Build();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -80,7 +71,16 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseRouting();
 
-app.ClientUIcontroller();
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.UseCors("AllowFrontend");
+
+// Enable WebSockets
+app.UseWebSockets();
+app.ClientUIcontroller(builder.Configuration);
 
 app.Run();

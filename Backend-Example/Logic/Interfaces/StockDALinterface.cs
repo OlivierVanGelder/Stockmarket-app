@@ -13,13 +13,13 @@ namespace Logic.Interfaces
         void WriteStocks(CandleItem[] c, string ticker);
         void DeleteDuplicateStocks();
 
-        CandleItem[] GetCandleValues(
+        Task<CandleItem[]> GetCandleValues(
             string stock,
             DateTime startDate,
             DateTime endDate,
             TimeSpan interval
         );
-        LineItem[] GetLineValues(
+        Task<LineItem[]> GetLineValues(
             string stockname,
             DateTime startDate,
             DateTime endDate,

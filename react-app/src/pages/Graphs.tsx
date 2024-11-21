@@ -60,8 +60,6 @@ function Graphs() {
         fetchStockNames().then(setStockNames)
     }, [])
 
-    // Update interval options based on start time selection
-    // Handle sending data requests over WebSocket
     useEffect(() => {
         const options: Record<string, Interval[]> = {
             hour: [new Interval(0.0006944444444, '1 min')],

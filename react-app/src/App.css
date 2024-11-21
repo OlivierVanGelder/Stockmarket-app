@@ -59,20 +59,20 @@ nav ul li:hover {
 }
 .select-group {
   display: flex;
-  flex-direction: row; /* Align items horizontally */
-  gap: 20px; /* Adjust spacing between selects */
-  flex-wrap: wrap; /* Allow wrapping for smaller screens */
+  flex-direction: row;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
 .select-item {
   display: flex;
   flex-direction: column;
-  align-items: center; /* Center-align the label and select */
+  align-items: center;
 }
 
 .select-label {
-  font-size: 1rem; /* Adjust as needed */
-  margin-bottom: 5px; /* Space between label and select */
+  font-size: 1rem;
+  margin-bottom: 5px;
   font-weight: bold;
 }
 

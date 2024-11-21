@@ -1,76 +1,75 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BCrypt.Net;
 using Backend_Example.Data.BDaccess;
 using Logic.Interfaces;
 using DAL.Tables;
+using Microsoft.EntityFrameworkCore;
 
 namespace DAL.BDaccess
 {
     public class UserDAL : UserDALinterface
     {
+        private readonly Backend_Example.Data.BDaccess.DbContext _context; // Inject ApplicationDbContext
+
+        // Constructor injection of ApplicationDbContext
+        public UserDAL(Backend_Example.Data.BDaccess.DbContext context)
+        {
+            _context = context;
+        }
+
         public string[] GetUsers()
         {
-            using (var db = new DbContext())
-            {
-                var user = db.Users;
-                return user.Select(s => s.Name).ToArray();
-            }
+            var users = _context.Users;
+            return users.Select(u => u.Name).ToArray();
         }
 
         public void WriteUser(string name, string password)
         {
-            using (var db = new DbContext())
+            var user = new User
             {
-                var user = new User
-                {
-                    Name = name,
-                    Password = password,
-                    BalanceInCents = 0,
-                };
-                db.Users.Add(user);
-                db.SaveChanges();
-            }
+                Name = name,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password), // Store hashed password
+                BalanceInCents = 0,
+            };
+            _context.Users.Add(user);
+            _context.SaveChanges();
         }
 
         public bool VerifyUser(string name, string password)
         {
-            using (var db = new DbContext())
-            {
-                var user = db.Users;
-                return user.Any(u => u.Name == name && u.Password == password);
-            }
+            var user = _context.Users.FirstOrDefault(u => u.Name == name);
+            if (user == null) return false;
+
+            return BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
         }
 
         public bool ChangeUserStock(string name, string ticker, int amount)
         {
-            using var db = new DbContext();
-
-            var user = db.Users.Where(u => u.Name == name).FirstOrDefault();
-            var stock = db.Stocks.Where(s => s.Ticker == ticker).FirstOrDefault();
+            var user = _context.Users.FirstOrDefault(u => u.Name == name);
+            var stock = _context.Stocks.FirstOrDefault(s => s.Ticker == ticker);
             if (user == null || stock == null)
             {
                 return false;
             }
 
-            var userStock = db
-                .User_Stocks.Where(us => us.UserId == user.Id && us.StockId == stock.Id)
-                .FirstOrDefault();
+            var userStock = _context.User_Stocks.FirstOrDefault(us => us.UserId == user.Id && us.StockId == stock.Id);
             if (userStock == null)
             {
                 var newUserStock = new User_Stock
                 {
-                    UserId = user.Id,
+                    UserId = user.Id,  // user.Id is now a string
                     StockId = stock.Id,
                     StockAmount = amount,
                 };
-                db.User_Stocks.Add(newUserStock);
+                _context.User_Stocks.Add(newUserStock);
             }
             else
             {
                 userStock.StockAmount += amount;
             }
-            db.SaveChanges();
+            _context.SaveChanges();
             return true;
         }
     }

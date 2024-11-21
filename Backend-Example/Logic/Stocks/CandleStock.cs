@@ -5,7 +5,7 @@ namespace Backend_Example.Logic.Stocks
 {
     public class CandleStock
     {
-        public static CandleItem[] GetCandleValues(
+        public static Task<CandleItem[]> GetCandleValues(
             string stock,
             double startX,
             double endX,
