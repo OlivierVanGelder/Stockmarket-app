@@ -2,6 +2,7 @@
 using Backend_Example.Data.BDaccess;
 using Backend_Example.Logic.Classes;
 using Logic.Interfaces;
+using DAL.Tables;
 
 namespace DAL.BDaccess
 {
@@ -40,7 +41,7 @@ namespace DAL.BDaccess
                 var candles = db.Candles;
                 foreach (var item in c)
                 {
-                    var candlestockminute = new CandleStockMinute
+                    var candlestockminute = new CandlestockMinute
                     {
                         Stock_Id = stockId,
                         Date = item.Date,

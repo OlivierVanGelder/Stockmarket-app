@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Backend_Example.Data.BDaccess;
 using Logic.Interfaces;
+using DAL.Tables;
 
 namespace DAL.BDaccess
 {
