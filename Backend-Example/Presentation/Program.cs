@@ -1,44 +1,47 @@
 using Backend_Example.Controllers;
+using Backend_Example.Logic.Stocks;
 using DAL.BDaccess;
 using DAL.Tables;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Backend_Example.Logic.Stocks;
 using Logic.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebSockets;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddAuthentication()
-    .AddCookie();
+builder.Services.AddAuthentication().AddCookie();
 
 builder.Services.AddAuthorization();
 
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<Backend_Example.Data.BDaccess.DbContext>(options =>
+builder.Services.AddDbContext<Backend_Example.Data.BDaccess.DbStockEngine>(options =>
     options.UseSqlServer(connectionString)
 );
 
-builder.Services.AddIdentity<User, IdentityRole>()
-    .AddEntityFrameworkStores<Backend_Example.Data.BDaccess.DbContext>()
+builder
+    .Services.AddIdentity<IdentityUser, IdentityRole>()
+    .AddEntityFrameworkStores<Backend_Example.Data.BDaccess.DbStockEngine>()
     .AddDefaultTokenProviders();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", builder =>
-    {
-        builder.WithOrigins("http://localhost:3000")
-               .AllowAnyMethod()
-               .AllowAnyHeader()
-               .AllowCredentials();
-    });
+    options.AddPolicy(
+        "AllowFrontend",
+        builder =>
+        {
+            builder
+                .WithOrigins("http://localhost:3000")
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials();
+        }
+    );
 });
-
 
 builder.Services.Configure<IdentityOptions>(options =>
 {
@@ -58,7 +61,6 @@ builder.Services.AddCors(policyBuilder =>
         policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()
     )
 );
-
 
 builder.Services.AddWebSockets(options => { });
 

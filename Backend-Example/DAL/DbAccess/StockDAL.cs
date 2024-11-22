@@ -1,15 +1,15 @@
-﻿using DAL.Tables;
-using Backend_Example.Logic.Classes;
+﻿using Backend_Example.Logic.Classes;
+using DAL.Tables;
 using Logic.Interfaces;
 
 namespace DAL.BDaccess
 {
     public class StockDAL : StockDALinterface
     {
-        private readonly Backend_Example.Data.BDaccess.DbContext _context;
+        private readonly Backend_Example.Data.BDaccess.DbStockEngine _context;
 
         // Constructor injection of DbContext
-        public StockDAL(Backend_Example.Data.BDaccess.DbContext context)
+        public StockDAL(Backend_Example.Data.BDaccess.DbStockEngine context)
         {
             _context = context;
         }
@@ -55,8 +55,11 @@ namespace DAL.BDaccess
         }
 
         public async Task<CandleItem[]> GetCandleValues(
-        string stockName, DateTime startDate, DateTime endDate, TimeSpan interval
-    )
+            string stockName,
+            DateTime startDate,
+            DateTime endDate,
+            TimeSpan interval
+        )
         {
             using (var db = _context)
             {
@@ -73,20 +76,27 @@ namespace DAL.BDaccess
                     .AsEnumerable()
                     .GroupBy(c => c.Date.Ticks / interval.Ticks);
 
-                var filteredCandles = candles.Select(candleGroup => new CandleItem(
-                    open: candleGroup.First().Open / 100.0,
-                    close: candleGroup.Last().Close / 100.0,
-                    high: candleGroup.Max(c => c.High) / 100.0,
-                    low: candleGroup.Min(c => c.Low) / 100.0,
-                    volume: candleGroup.Sum(c => c.Volume) / 100.0,
-                    date: candleGroup.First().Date
-                )).ToArray();
+                var filteredCandles = candles
+                    .Select(candleGroup => new CandleItem(
+                        open: candleGroup.First().Open / 100.0,
+                        close: candleGroup.Last().Close / 100.0,
+                        high: candleGroup.Max(c => c.High) / 100.0,
+                        low: candleGroup.Min(c => c.Low) / 100.0,
+                        volume: candleGroup.Sum(c => c.Volume) / 100.0,
+                        date: candleGroup.First().Date
+                    ))
+                    .ToArray();
 
                 return filteredCandles;
             }
         }
 
-        public async Task<LineItem[]> GetLineValues(string stockName, DateTime startDate, DateTime endDate, TimeSpan interval)
+        public async Task<LineItem[]> GetLineValues(
+            string stockName,
+            DateTime startDate,
+            DateTime endDate,
+            TimeSpan interval
+        )
         {
             using (var db = _context)
             {

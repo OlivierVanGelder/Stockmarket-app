@@ -1,17 +1,19 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using DAL.Tables;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using DAL.Tables;
 
 namespace Backend_Example.Data.BDaccess
 {
-    public class DbContext : IdentityDbContext<User>
+    public class DbStockEngine : IdentityDbContext<IdentityUser>
     {
-        public DbSet<User> Users { get; set; }
+        public DbStockEngine() { }
+
         public DbSet<Stock> Stocks { get; set; }
         public DbSet<CandlestockMinute> Candles { get; set; }
         public DbSet<User_Stock> User_Stocks { get; set; }
 
-        public DbContext(DbContextOptions<DbContext> options)
+        public DbStockEngine(DbContextOptions<DbStockEngine> options)
             : base(options) { }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -20,7 +22,8 @@ namespace Backend_Example.Data.BDaccess
             {
                 var conn = Environment.GetEnvironmentVariable("ConnectionString");
                 optionsBuilder.UseSqlServer(
-                    conn ?? @"Server=(localdb)\LOCAL;Database=StockEngine;Integrated Security=True;");
+                    conn ?? @"Server=(localdb)\LOCAL;Database=StockEngine;Integrated Security=True;"
+                );
             }
         }
     }

@@ -1,20 +1,20 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using Backend_Example.Data.BDaccess;
 using Backend_Example.Logic.Classes;
 using Backend_Example.Logic.Stocks;
 using Backend_Example.Models;
 using DAL.BDaccess;
-using Logic.Functions;
+using DAL.Tables;
 using Logic.Interfaces;
+using Microsoft.AspNetCore.Identity;
 
-namespace Backend_Example.Controllers
+public static class ClientUIController
 {
-    public static class ClientUIController
+    public static void ClientUIcontroller(this WebApplication app, IConfiguration configuration)
     {
-        public static void ClientUIcontroller(this WebApplication app, IConfiguration configuration)
-        {
-            app.MapGet(
+        app.MapGet(
                 "/stocks/names",
                 async (StockDALinterface stockDAL) =>
                 {
@@ -24,9 +24,15 @@ namespace Backend_Example.Controllers
             .WithName("GetStockNames")
             .WithOpenApi();
 
-            app.MapGet(
+        app.MapGet(
                 "/lineStock",
-                async (string ticker, double interval, double start, double end, StockDALinterface stockDAL) =>
+                async (
+                    string ticker,
+                    double interval,
+                    double start,
+                    double end,
+                    StockDALinterface stockDAL
+                ) =>
                 {
                     LineStock stock = new();
                     DateTime startDate = Converter.ConvertDigitToDate(start);
@@ -47,7 +53,7 @@ namespace Backend_Example.Controllers
             .WithName("GetStockFromTicker")
             .WithOpenApi();
 
-            app.Map(
+        app.Map(
                 "/stockWS",
                 async (HttpContext context) =>
                 {
@@ -66,9 +72,15 @@ namespace Backend_Example.Controllers
             .WithName("StockWS")
             .WithOpenApi();
 
-            app.MapGet(
+        app.MapGet(
                 "/candlestock",
-                async (string ticker, double interval, double start, double end, StockDALinterface stockDAL) =>
+                async (
+                    string ticker,
+                    double interval,
+                    double start,
+                    double end,
+                    StockDALinterface stockDAL
+                ) =>
                 {
                     CandleItem[] results = await CandleStock.GetCandleValues(
                         ticker,
@@ -84,93 +96,102 @@ namespace Backend_Example.Controllers
             .WithName("GetCandleStockFromTicker")
             .WithOpenApi();
 
-            app.MapPost("/accounts/login", async (HttpContext context, Data.BDaccess.DbContext dbContext) =>
+        app.MapPost(
+            "/accounts/login",
+            async (
+                HttpContext context,
+                DbStockEngine dbContext,
+                UserManager<IdentityUser> userManager
+            ) =>
             {
                 var loginRequest = await context.Request.ReadFromJsonAsync<LoginRequest>();
-                if (loginRequest == null) return Results.BadRequest();
-                UserDAL userDAL = new(dbContext);
-                bool user = userDAL.VerifyUser(loginRequest.Name, loginRequest.Password);
+                if (loginRequest == null)
+                    return Results.BadRequest();
 
-                if (!user) return Results.Unauthorized();
+                UserDAL userDAL = new(dbContext, userManager);
+                bool user = await userDAL.VerifyUser(loginRequest.Name, loginRequest.Password);
 
-                string secretKey = configuration["SecretKey:Key"]; // Read from appsettings.json
+                if (!user)
+                    return Results.Unauthorized();
 
-                var token = JwtHelper.GenerateToken(loginRequest.Name, secretKey);
+                string secretKey = configuration["SecretKey:Key"];
+
+                var token = Logic.Functions.JwtHelper.GenerateToken(loginRequest.Name, secretKey);
                 return Results.Json(new { Token = token });
-            });
-        }
+            }
+        );
+    }
 
-        // Method for handling WebSocket communication with DI for StockDAL
-        private static async Task ProvideStock(WebSocket webSocket, IServiceProvider serviceProvider)
+    // Method for handling WebSocket communication with DI for StockDAL
+    private static async Task ProvideStock(WebSocket webSocket, IServiceProvider serviceProvider)
+    {
+        var stockDAL = serviceProvider.GetRequiredService<StockDALinterface>(); // Resolving StockDAL
+
+        var buffer = new byte[1024];
+        var receiveResult = await webSocket.ReceiveAsync(
+            new ArraySegment<byte>(buffer),
+            CancellationToken.None
+        );
+
+        while (!receiveResult.CloseStatus.HasValue)
         {
-            var stockDAL = serviceProvider.GetRequiredService<StockDALinterface>(); // Resolving StockDAL
-
-            var buffer = new byte[1024];
-            var receiveResult = await webSocket.ReceiveAsync(
-                new ArraySegment<byte>(buffer),
-                CancellationToken.None
-            );
-
-            while (!receiveResult.CloseStatus.HasValue)
+            string[] message = Encoding.UTF8.GetString(buffer).Split('-');
+            if (message.Length == 4)
             {
-                string[] message = Encoding.UTF8.GetString(buffer).Split('-');
-                if (message.Length == 4)
-                {
-                    LineStock lineStock = new();
-                    string stock = message[0].Replace("\"", "");
-                    DateTime startDate = Converter.ConvertDigitToDate(double.Parse(message[2]));
-                    DateTime endDate = Converter.ConvertDigitToDate(
-                        double.Parse(message[3].Replace("\"", ""))
-                    );
-                    TimeSpan intervalSpan = TimeSpan.FromDays(double.Parse(message[1]));
-                    string resultJson = JsonSerializer.Serialize(
-                        await lineStock.GetValues(stock, startDate, endDate, intervalSpan, stockDAL)
-                    );
-                    byte[] resultBuffer = Encoding.UTF8.GetBytes(resultJson);
+                LineStock lineStock = new();
+                string stock = message[0].Replace("\"", "");
+                DateTime startDate = Converter.ConvertDigitToDate(double.Parse(message[2]));
+                DateTime endDate = Converter.ConvertDigitToDate(
+                    double.Parse(message[3].Replace("\"", ""))
+                );
+                TimeSpan intervalSpan = TimeSpan.FromDays(double.Parse(message[1]));
+                string resultJson = JsonSerializer.Serialize(
+                    await lineStock.GetValues(stock, startDate, endDate, intervalSpan, stockDAL)
+                );
+                byte[] resultBuffer = Encoding.UTF8.GetBytes(resultJson);
 
-                    await webSocket.SendAsync(
-                        new ArraySegment<byte>(resultBuffer),
-                        receiveResult.MessageType,
-                        receiveResult.EndOfMessage,
-                        CancellationToken.None
-                    );
-                }
-                else if (message.Length == 5)
-                {
-                    string stock = message[0].Replace("\"", "");
-                    double interval = double.Parse(message[1]);
-                    double startX = double.Parse(message[2]);
-                    double endX = double.Parse(message[3].Replace("\"", ""));
-                    CandleItem[] results = await CandleStock.GetCandleValues(
-                        stock,
-                        startX,
-                        endX,
-                        interval,
-                        stockDAL
-                    );
+                await webSocket.SendAsync(
+                    new ArraySegment<byte>(resultBuffer),
+                    receiveResult.MessageType,
+                    receiveResult.EndOfMessage,
+                    CancellationToken.None
+                );
+            }
+            else if (message.Length == 5)
+            {
+                string stock = message[0].Replace("\"", "");
+                double interval = double.Parse(message[1]);
+                double startX = double.Parse(message[2]);
+                double endX = double.Parse(message[3].Replace("\"", ""));
+                CandleItem[] results = await CandleStock.GetCandleValues(
+                    stock,
+                    startX,
+                    endX,
+                    interval,
+                    stockDAL
+                );
 
-                    string resultJson = JsonSerializer.Serialize(results);
-                    byte[] resultBuffer = Encoding.UTF8.GetBytes(resultJson);
+                string resultJson = JsonSerializer.Serialize(results);
+                byte[] resultBuffer = Encoding.UTF8.GetBytes(resultJson);
 
-                    await webSocket.SendAsync(
-                        new ArraySegment<byte>(resultBuffer),
-                        receiveResult.MessageType,
-                        receiveResult.EndOfMessage,
-                        CancellationToken.None
-                    );
-                }
-
-                receiveResult = await webSocket.ReceiveAsync(
-                    new ArraySegment<byte>(buffer),
+                await webSocket.SendAsync(
+                    new ArraySegment<byte>(resultBuffer),
+                    receiveResult.MessageType,
+                    receiveResult.EndOfMessage,
                     CancellationToken.None
                 );
             }
 
-            await webSocket.CloseAsync(
-                receiveResult.CloseStatus.Value,
-                receiveResult.CloseStatusDescription,
+            receiveResult = await webSocket.ReceiveAsync(
+                new ArraySegment<byte>(buffer),
                 CancellationToken.None
             );
         }
+
+        await webSocket.CloseAsync(
+            receiveResult.CloseStatus.Value,
+            receiveResult.CloseStatusDescription,
+            CancellationToken.None
+        );
     }
 }
