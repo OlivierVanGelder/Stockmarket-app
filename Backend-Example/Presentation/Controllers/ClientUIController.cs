@@ -97,7 +97,7 @@ public static class ClientUIController
             .WithOpenApi();
 
         app.MapPost(
-            "/accounts/login",
+            "/accounts/login/verify",
             async (
                 HttpContext context,
                 DbStockEngine dbContext,
@@ -120,12 +120,37 @@ public static class ClientUIController
                 return Results.Json(new { Token = token });
             }
         );
+        app.MapPost(
+            "/accounts/login/register",
+            async (
+                HttpContext context,
+                DbStockEngine dbContext,
+                UserManager<IdentityUser> userManager
+            ) =>
+            {
+                var registerRequest = await context.Request.ReadFromJsonAsync<RegisterRequest>();
+                if (registerRequest == null)
+                    return Results.BadRequest();
+
+                UserDAL userDAL = new(dbContext, userManager);
+                bool user = await userDAL.AddUserAsync(
+                    registerRequest.Name,
+                    registerRequest.Password
+                );
+
+                string secretKey = configuration["SecretKey:Key"];
+                var token = Logic.Functions.JwtHelper.GenerateToken(
+                    registerRequest.Name,
+                    secretKey
+                );
+                return Results.Json(new { Token = token });
+            }
+        );
     }
 
-    // Method for handling WebSocket communication with DI for StockDAL
     private static async Task ProvideStock(WebSocket webSocket, IServiceProvider serviceProvider)
     {
-        var stockDAL = serviceProvider.GetRequiredService<StockDALinterface>(); // Resolving StockDAL
+        var stockDAL = serviceProvider.GetRequiredService<StockDALinterface>();
 
         var buffer = new byte[1024];
         var receiveResult = await webSocket.ReceiveAsync(

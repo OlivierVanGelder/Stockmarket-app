@@ -25,7 +25,7 @@ namespace DAL.BDaccess
             return users.Select(u => u.UserName).ToArray();
         }
 
-        public async Task<IdentityResult> AddUserAsync(string name, string password)
+        public async Task<bool> AddUserAsync(string name, string password)
         {
             var user = new IdentityUser { UserName = name };
 
@@ -35,7 +35,7 @@ namespace DAL.BDaccess
             // Check if user creation was successful
             if (result.Succeeded)
             {
-                return result;
+                return true;
             }
             else
             {
@@ -44,7 +44,7 @@ namespace DAL.BDaccess
                     Debug.WriteLine(error.Description);
                 }
 
-                return result;
+                return false;
             }
         }
 
