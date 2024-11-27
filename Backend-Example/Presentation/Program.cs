@@ -24,7 +24,7 @@ builder.Services.AddDbContext<Backend_Example.Data.BDaccess.DbStockEngine>(optio
 );
 
 builder
-    .Services.AddIdentity<IdentityUser, IdentityRole>()
+    .Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<Backend_Example.Data.BDaccess.DbStockEngine>()
     .AddDefaultTokenProviders();
 

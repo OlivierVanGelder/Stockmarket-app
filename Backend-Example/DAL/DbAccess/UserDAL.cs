@@ -11,9 +11,9 @@ namespace DAL.BDaccess
     public class UserDAL : UserDALinterface
     {
         private readonly DbStockEngine _context;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<User> _userManager;
 
-        public UserDAL(DbStockEngine context, UserManager<IdentityUser> userManager)
+        public UserDAL(DbStockEngine context, UserManager<User> userManager)
         {
             _context = context;
             _userManager = userManager;
@@ -27,7 +27,7 @@ namespace DAL.BDaccess
 
         public async Task<bool> AddUserAsync(string name, string password)
         {
-            var user = new IdentityUser { UserName = name };
+            var user = new User { UserName = name };
 
             // Create the user using the UserManager
             var result = await _userManager.CreateAsync(user, password);
@@ -55,6 +55,20 @@ namespace DAL.BDaccess
                 return false;
 
             return await _userManager.CheckPasswordAsync(user, password);
+        }
+
+        public async Task<string> GetUserId(string name)
+        {
+            var userId = (await _userManager.FindByNameAsync(name)).Id;
+            return userId;
+        }
+
+        public async Task<double> GetUserBalance(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            double userBalance = user.BalanceInCents / 100.0;
+
+            return userBalance;
         }
 
         public bool ChangeUserStock(string name, string ticker, int amount)

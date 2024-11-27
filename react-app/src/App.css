@@ -70,6 +70,14 @@ nav ul li:hover {
   align-items: center;
 }
 
+.select-item-last {
+  display: flex;
+  flex-direction: column;
+  margin-left: auto;
+  margin-right: 20px;
+}
+
+
 .select-label {
   font-size: 1rem;
   margin-bottom: 5px;

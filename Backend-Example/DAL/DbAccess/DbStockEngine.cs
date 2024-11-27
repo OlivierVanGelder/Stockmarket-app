@@ -1,11 +1,10 @@
 ﻿using DAL.Tables;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend_Example.Data.BDaccess
 {
-    public class DbStockEngine : IdentityDbContext<IdentityUser>
+    public class DbStockEngine : IdentityDbContext<User>
     {
         public DbStockEngine() { }
 

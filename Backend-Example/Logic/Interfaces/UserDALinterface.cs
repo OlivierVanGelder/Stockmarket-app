@@ -9,5 +9,10 @@ namespace Logic.Interfaces
     public interface UserDALinterface
     {
         string[] GetUsers();
+        Task<bool> AddUserAsync(string name, string password);
+        Task<bool> VerifyUser(string name, string password);
+        Task<string> GetUserId(string name);
+        Task<double> GetUserBalance(string userId);
+        public bool ChangeUserStock(string userId, string stockId, int amount);
     }
 }

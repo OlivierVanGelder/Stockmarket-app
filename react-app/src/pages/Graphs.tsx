@@ -16,6 +16,30 @@ async function fetchStockNames(): Promise<string[]> {
     }
 }
 
+async function fetchUserBalance(): Promise<number> {
+    try {
+        const userId = sessionStorage.getItem('userId')
+        const response = await fetch(
+            'https://localhost:42069/accounts/user/balance',
+            {
+                method: 'POST',
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify(userId)
+            }
+        )
+        if (!response.ok) throw new Error('Failed to fetch user balance')
+        const data = await response.json()
+        return await data.userBalance
+    } catch (error) {
+        console.error('Error fetching user balance:', error)
+        return 0
+    }
+}
+
 function convertToDays(date: Date): number {
     const referenceDate = new Date('2020-11-01T12:00:00Z')
     return parseFloat(
@@ -47,6 +71,7 @@ function Graphs() {
         datasets: []
     })
     const [stockNames, setStockNames] = useState<string[]>([])
+    const [userBalance, setUserBalance] = useState<number>(0)
     const [intervalOptions, setIntervalOptions] = useState<Interval[]>([
         new Interval(7, '1 week')
     ])
@@ -55,9 +80,9 @@ function Graphs() {
         []
     )
 
-    // Fetch stock names when the component mounts
     useEffect(() => {
         fetchStockNames().then(setStockNames)
+        fetchUserBalance().then(setUserBalance)
     }, [])
 
     useEffect(() => {
@@ -142,6 +167,7 @@ function Graphs() {
         }
 
         socket.onmessage = event => {
+            console.log('Received data:', event.data)
             const newData = JSON.parse(event.data)
             if (candleSelected) {
                 applyCandleData(newData)
@@ -245,6 +271,9 @@ function Graphs() {
                             </option>
                         ))}
                     </select>
+                </div>
+                <div className="select-item-last">
+                    <p className="select-label">Balance: {userBalance}</p>
                 </div>
             </div>
 

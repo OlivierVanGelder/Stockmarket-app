@@ -13,7 +13,6 @@ namespace DAL.Tables
         public override string PasswordHash { get; set; } = "";
         public override string SecurityStamp { get; set; } = "";
 
-        public string Name { get; set; } = "";
         public int BalanceInCents { get; set; } = 0;
         public List<User_Stock> User_Stocks { get; set; } = new List<User_Stock>();
     }

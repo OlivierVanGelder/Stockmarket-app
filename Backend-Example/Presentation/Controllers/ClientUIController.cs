@@ -1,4 +1,5 @@
-﻿using System.Net.WebSockets;
+﻿using System.Data.Entity;
+using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using Backend_Example.Data.BDaccess;
@@ -55,12 +56,12 @@ public static class ClientUIController
 
         app.Map(
                 "/stockWS",
-                async (HttpContext context) =>
+                async (HttpContext context, DbStockEngine dbContext) =>
                 {
                     if (context.WebSockets.IsWebSocketRequest)
                     {
                         using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                        await ProvideStock(webSocket, app.Services);
+                        await ProvideStock(webSocket, dbContext);
                         return Results.Ok();
                     }
                     else
@@ -98,11 +99,7 @@ public static class ClientUIController
 
         app.MapPost(
             "/accounts/login/verify",
-            async (
-                HttpContext context,
-                DbStockEngine dbContext,
-                UserManager<IdentityUser> userManager
-            ) =>
+            async (HttpContext context, DbStockEngine dbContext, UserManager<User> userManager) =>
             {
                 var loginRequest = await context.Request.ReadFromJsonAsync<LoginRequest>();
                 if (loginRequest == null)
@@ -114,19 +111,17 @@ public static class ClientUIController
                 if (!user)
                     return Results.Unauthorized();
 
+                string userId = await userDAL.GetUserId(loginRequest.Name);
+
                 string secretKey = configuration["SecretKey:Key"];
 
                 var token = Logic.Functions.JwtHelper.GenerateToken(loginRequest.Name, secretKey);
-                return Results.Json(new { Token = token });
+                return Results.Json(new { token, userId });
             }
         );
         app.MapPost(
             "/accounts/login/register",
-            async (
-                HttpContext context,
-                DbStockEngine dbContext,
-                UserManager<IdentityUser> userManager
-            ) =>
+            async (HttpContext context, DbStockEngine dbContext, UserManager<User> userManager) =>
             {
                 var registerRequest = await context.Request.ReadFromJsonAsync<RegisterRequest>();
                 if (registerRequest == null)
@@ -146,11 +141,25 @@ public static class ClientUIController
                 return Results.Json(new { Token = token });
             }
         );
+        app.MapPost(
+            "/accounts/user/balance",
+            async (HttpContext context, DbStockEngine dbContext, UserManager<User> userManager) =>
+            {
+                string userID = await context.Request.ReadFromJsonAsync<string>();
+                if (userID == null)
+                    return Results.BadRequest();
+
+                UserDAL userDAL = new(dbContext, userManager);
+                double userBalance = await userDAL.GetUserBalance(userID);
+
+                return Results.Json(new { UserBalance = userBalance });
+            }
+        );
     }
 
-    private static async Task ProvideStock(WebSocket webSocket, IServiceProvider serviceProvider)
+    private static async Task ProvideStock(WebSocket webSocket, DbStockEngine dbContext)
     {
-        var stockDAL = serviceProvider.GetRequiredService<StockDALinterface>();
+        var stockDAL = new StockDAL(dbContext);
 
         var buffer = new byte[1024];
         var receiveResult = await webSocket.ReceiveAsync(

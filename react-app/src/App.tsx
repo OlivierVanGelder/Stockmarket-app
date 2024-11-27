@@ -49,8 +49,10 @@ const Home = () => {
             }
 
             const data = await response.json()
-            const token = data.Token
-
+            const token = data.token
+            const userId = data.userId
+            console.log(data, userId, token)
+            sessionStorage.setItem('userId', userId)
             sessionStorage.setItem('token', token)
             console.log('Login successful')
             setLoginMessage({ message: 'Login successful', color: 'green' })
