@@ -70,6 +70,13 @@ namespace DAL.BDaccess
 
             return userBalance;
         }
+        public async Task<string> GetUserName(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            string userName = user.UserName;
+
+            return userName;
+        }
 
         public bool ChangeUserStock(string name, string ticker, int amount)
         {

@@ -150,9 +150,25 @@ public static class ClientUIController
                     return Results.BadRequest();
 
                 UserDAL userDAL = new(dbContext, userManager);
-                double userBalance = await userDAL.GetUserBalance(userID);
+                Logic.Functions.User user = new();
+                double userBalance = await user.GetUserBalance(userDAL, userID);
 
                 return Results.Json(new { UserBalance = userBalance });
+            }
+        );
+        app.MapPost(
+            "/accounts/user/name",
+            async (HttpContext context, DbStockEngine dbContext, UserManager<User> userManager) =>
+            {
+                string userID = await context.Request.ReadFromJsonAsync<string>();
+                if (userID == null)
+                    return Results.BadRequest();
+
+                UserDAL userDAL = new(dbContext, userManager);
+                Logic.Functions.User user = new();
+                string userName = await user.GetUserName(userDAL, userID);
+
+                return Results.Json(new { UserName = userName });
             }
         );
     }
