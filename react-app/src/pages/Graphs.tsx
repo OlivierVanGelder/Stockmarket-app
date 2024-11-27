@@ -4,6 +4,24 @@ import LineChart from '../components/LineChart'
 import CandleStickChart from '../components/CandleStickChart'
 import ToggleButtonNotEmpty from '../components/ToggleButton'
 import Interval from '../Interval'
+import Popup from '../components/Popup'
+import { Button } from '@mui/material'
+import { styled } from '@mui/material/styles'
+
+const BuyButton = styled(Button)(({ theme }) => ({
+    backgroundColor: '#16fa4f',
+    color: '#FFFF',
+    '&:hover': {
+        backgroundColor: '#6df78f'
+    }
+})) as typeof Button
+const SellButton = styled(Button)(({ theme }) => ({
+    backgroundColor: '#fa1616',
+    color: '#FFFF',
+    '&:hover': {
+        backgroundColor: '#f76d6d'
+    }
+})) as typeof Button
 
 async function fetchStockNames(): Promise<string[]> {
     try {
@@ -62,7 +80,10 @@ function Graphs() {
     const [ticker, setTicker] = useState<string>('APPL')
     const [candleData, setCandleData] = useState<CandleDataItem[]>([])
     const [interval, setInterval] = useState<number>(1 / 24)
-    const [startTimeString, setStartDay] = useState<string>('all')
+    const [startTimeString, setStartDay] = useState<string>('month')
+    const [popupOpen, setPopupOpen] = useState(false)
+    const [isBuy, setIsBuy] = useState(true)
+    const [stockPrice, setStockPrice] = useState(100)
     const [chartData, setUserData] = useState<{
         labels: string[]
         datasets: any[]
@@ -73,7 +94,7 @@ function Graphs() {
     const [stockNames, setStockNames] = useState<string[]>([])
     const [userBalance, setUserBalance] = useState<number>(0)
     const [intervalOptions, setIntervalOptions] = useState<Interval[]>([
-        new Interval(7, '1 week')
+        new Interval(1, '1 day')
     ])
     const socket = useMemo(
         () => new WebSocket(`wss://localhost:42069/StockWS`),
@@ -84,6 +105,22 @@ function Graphs() {
         fetchStockNames().then(setStockNames)
         fetchUserBalance().then(setUserBalance)
     }, [])
+
+    const openPopup = () => setPopupOpen(true)
+    const closePopup = () => setPopupOpen(false)
+
+    const handleInvest = (amount: number) => {
+        if (isBuy) {
+            // Logic for buying stock: usually, this would involve a backend call.
+            alert(`You bought ${amount} stocks of ${ticker}.`)
+            setUserBalance(userBalance - stockPrice * amount)
+            closePopup() // Close modal after purchase
+        } else {
+            // Logic for selling stock: usually, this would involve a backend call.
+            setUserBalance(userBalance + stockPrice * amount)
+            closePopup()
+        }
+    }
 
     useEffect(() => {
         const options: Record<string, Interval[]> = {
@@ -272,11 +309,56 @@ function Graphs() {
                         ))}
                     </select>
                 </div>
+                <div className="select-item">
+                    <div
+                        style={{
+                            marginTop: 'auto',
+                            marginBottom: '10px'
+                        }}
+                    >
+                        <BuyButton
+                            onClick={() => {
+                                setIsBuy(true)
+                                openPopup()
+                            }}
+                            size="large"
+                        >
+                            Buy
+                        </BuyButton>
+                    </div>
+                </div>
+                <div className="select-item">
+                    <div
+                        style={{
+                            marginTop: 'auto',
+                            marginBottom: '10px'
+                        }}
+                    >
+                        <SellButton
+                            onClick={() => {
+                                setIsBuy(false)
+                                openPopup()
+                            }}
+                            size="large"
+                        >
+                            Sell
+                        </SellButton>
+                    </div>
+                </div>
                 <div className="select-item-last">
                     <p className="select-label">Balance: {userBalance}</p>
                 </div>
             </div>
-
+            <div>
+                <Popup
+                    isBuy={isBuy}
+                    isOpen={popupOpen}
+                    onClose={closePopup}
+                    onSubmit={handleInvest}
+                    stockPrice={stockPrice}
+                    userBalance={userBalance}
+                />
+            </div>
             <ToggleButtonNotEmpty
                 candleSelected={candleSelected}
                 setCandleSelected={setCandleSelected}

@@ -62,6 +62,7 @@ nav ul li:hover {
   flex-direction: row;
   gap: 20px;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .select-item {
@@ -76,7 +77,6 @@ nav ul li:hover {
   margin-left: auto;
   margin-right: 20px;
 }
-
 
 .select-label {
   font-size: 1rem;
