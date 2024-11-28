@@ -171,6 +171,53 @@ public static class ClientUIController
                 return Results.Json(new { UserName = userName });
             }
         );
+        app.MapPost(
+            "/accounts/stock/buy",
+            async (HttpContext context, DbStockEngine dbContext, UserManager<User> userManager) =>
+            {
+                var stockTradeRequest = await context.Request.ReadFromJsonAsync<StockTradeRequest>();
+                if (stockTradeRequest == null)
+                    return Results.BadRequest("Invalid request payload.");
+
+                string? userID = stockTradeRequest.UserID;
+                int? amount = stockTradeRequest.Amount;
+                string? ticker = stockTradeRequest.Ticker;
+                double? price = stockTradeRequest.Price;
+
+                if (amount == null || ticker == null || string.IsNullOrEmpty(userID) || string.IsNullOrEmpty(ticker) || amount <= 0)
+                    return Results.BadRequest("Missing or invalid data.");
+
+                UserDAL userDAL = new(dbContext, userManager);
+                Logic.Functions.User user = new();
+                bool success = await user.BuyUserStock(userDAL, userID, ticker, amount ?? 0, price ?? 0);
+
+                return Results.Json(new { success });
+            }
+        );
+
+        app.MapPost(
+            "/accounts/stock/sell",
+            async (HttpContext context, DbStockEngine dbContext, UserManager<User> userManager) =>
+            {
+                var stockTradeRequest = await context.Request.ReadFromJsonAsync<StockTradeRequest>();
+                if (stockTradeRequest == null)
+                    return Results.BadRequest("Invalid request payload.");
+
+                string? userID = stockTradeRequest.UserID;
+                int? amount = stockTradeRequest.Amount;
+                string? ticker = stockTradeRequest.Ticker;
+                double? price = stockTradeRequest.Price;
+
+                if (amount == null || ticker == null || string.IsNullOrEmpty(userID) || string.IsNullOrEmpty(ticker) || amount <= 0)
+                    return Results.BadRequest("Missing or invalid data.");
+
+                UserDAL userDAL = new(dbContext, userManager);
+                Logic.Functions.User user = new();
+                bool result = await user.SellUserStock(userDAL, userID, ticker, amount ?? 0, price ?? 0);
+
+                return Results.Json(new { result });
+            }
+        );
     }
 
     private static async Task ProvideStock(WebSocket webSocket, DbStockEngine dbContext)

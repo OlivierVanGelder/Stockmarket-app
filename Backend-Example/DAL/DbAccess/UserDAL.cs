@@ -47,6 +47,122 @@ namespace DAL.BDaccess
                 return false;
             }
         }
+        public async Task<bool> DeleteUser(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+            {
+                return false;
+            }
+
+            var result = await _userManager.DeleteAsync(user);
+            if (result.Succeeded)
+            {
+                return true;
+            }
+            else
+            {
+                foreach (var error in result.Errors)
+                {
+                    Debug.WriteLine(error.Description);
+                }
+
+                return false;
+            }
+        }
+
+        private async Task<bool> UpdateUserBalance(string id, double balance)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+            {
+                return false;
+            }
+
+            user.BalanceInCents = (int)(balance * 100);
+            var result = await _userManager.UpdateAsync(user);
+            if (result.Succeeded)
+            {
+                return true;
+            }
+            else
+            {
+                foreach (var error in result.Errors)
+                {
+                    Debug.WriteLine(error.Description);
+                }
+
+                return false;
+            }
+        }
+
+        public async Task<bool> BuyUserStock(string id, string ticker, int amount, double price)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            var stock = _context.Stocks.FirstOrDefault(s => s.Ticker == ticker);
+            if (user == null || stock == null)
+            {
+                return false;
+            }
+
+            var userStock = _context.User_Stocks.FirstOrDefault(us =>
+                           us.UserId == user.Id && us.StockId == stock.Id
+                                      );
+            if (userStock == null)
+            {
+                var newUserStock = new User_Stock
+                {
+                    UserId = user.Id,
+                    StockId = stock.Id,
+                    StockAmount = amount,
+                };
+                _context.User_Stocks.Add(newUserStock);
+            }
+            else
+            {
+                userStock.StockAmount += amount;
+            }
+            double oldBalance = await GetUserBalance(id);
+            double newBalance = price * amount + oldBalance;
+            await UpdateUserBalance(id, newBalance);
+
+            _context.SaveChanges();
+            return true;
+        }
+
+        public async Task<bool> SellUserStock(string id, string ticker, int amount, double price)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            var stock = _context.Stocks.FirstOrDefault(s => s.Ticker == ticker);
+            if (user == null || stock == null)
+            {
+                return false;
+            }
+
+            var userStock = _context.User_Stocks.FirstOrDefault(us =>
+                           us.UserId == user.Id && us.StockId == stock.Id
+                                      );
+            if (userStock == null)
+            {
+                var newUserStock = new User_Stock
+                {
+                    UserId = user.Id,
+                    StockId = stock.Id,
+                    StockAmount = amount,
+                };
+                _context.User_Stocks.Add(newUserStock);
+            }
+            else
+            {
+                userStock.StockAmount -= amount;
+            }
+            double oldBalance = await GetUserBalance(id);
+            double newBalance = oldBalance - (price * amount);
+            await UpdateUserBalance(id, newBalance);
+
+            _context.SaveChanges();
+            return true;
+        }
 
         public async Task<bool> VerifyUser(string name, string password)
         {
@@ -76,36 +192,6 @@ namespace DAL.BDaccess
             string userName = user.UserName;
 
             return userName;
-        }
-
-        public bool ChangeUserStock(string name, string ticker, int amount)
-        {
-            var user = _context.Users.FirstOrDefault(u => u.UserName == name);
-            var stock = _context.Stocks.FirstOrDefault(s => s.Ticker == ticker);
-            if (user == null || stock == null)
-            {
-                return false;
-            }
-
-            var userStock = _context.User_Stocks.FirstOrDefault(us =>
-                us.UserId == user.Id && us.StockId == stock.Id
-            );
-            if (userStock == null)
-            {
-                var newUserStock = new User_Stock
-                {
-                    UserId = user.Id,
-                    StockId = stock.Id,
-                    StockAmount = amount,
-                };
-                _context.User_Stocks.Add(newUserStock);
-            }
-            else
-            {
-                userStock.StockAmount += amount;
-            }
-            _context.SaveChanges();
-            return true;
         }
     }
 }

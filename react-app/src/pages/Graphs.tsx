@@ -106,19 +106,77 @@ function Graphs() {
         fetchUserBalance().then(setUserBalance)
     }, [])
 
-    const openPopup = () => setPopupOpen(true)
+    const openPopup = () => {
+        setPopupOpen(true)
+    }
     const closePopup = () => setPopupOpen(false)
 
-    const handleInvest = (amount: number) => {
+    async function handleInvest(amount: number): Promise<boolean> {
+        const userId = sessionStorage.getItem('userId')
         if (isBuy) {
-            // Logic for buying stock: usually, this would involve a backend call.
+            const response = await fetch(
+                'https://localhost:42069/accounts/stock/buy',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Access-Control-Allow-Origin': '*',
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        userId,
+                        ticker,
+                        amount,
+                        Price: stockPrice
+                    })
+                }
+            )
+
+            if (!response.ok) {
+                return false
+            }
+
+            const data = await response.json()
+            const success: boolean = data.success
+            if (!success) {
+                return false
+            }
             alert(`You bought ${amount} stocks of ${ticker}.`)
             setUserBalance(userBalance - stockPrice * amount)
-            closePopup() // Close modal after purchase
+            closePopup()
+            return true
         } else {
-            // Logic for selling stock: usually, this would involve a backend call.
+            const response = await fetch(
+                'https://localhost:42069/accounts/stock/sell',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Access-Control-Allow-Origin': '*',
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        userId,
+                        ticker,
+                        amount,
+                        Price: stockPrice
+                    })
+                }
+            )
+
+            if (!response.ok) {
+                return false
+            }
+
+            const data = await response.json()
+            const success: boolean = data.success
+            if (!success) {
+                return false
+            }
+            alert(`You sold ${amount} stocks of ${ticker}.`)
             setUserBalance(userBalance + stockPrice * amount)
             closePopup()
+            return true
         }
     }
 
@@ -219,6 +277,8 @@ function Graphs() {
         if (labels.length != 0) {
             setInvalidData(false)
             data = data.map((item: any) => item.Value)
+            setStockPrice(data[data.length - 1])
+            console.log(data[data.length - 1])
             setUserData({
                 labels,
                 datasets: [
@@ -247,6 +307,8 @@ function Graphs() {
             y: [item.Open, item.High, item.Low, item.Close],
             volume: item.Volume
         }))
+        setStockPrice(formattedData[formattedData.length - 1].y[3])
+        console.log(formattedData[formattedData.length - 1].y[3])
         setCandleData(formattedData)
     }, [])
 
@@ -346,7 +408,9 @@ function Graphs() {
                     </div>
                 </div>
                 <div className="select-item-last">
-                    <p className="select-label">Balance: {userBalance}</p>
+                    <p className="select-label">
+                        Balance: {userBalance.toFixed(2)}
+                    </p>
                 </div>
             </div>
             <div>

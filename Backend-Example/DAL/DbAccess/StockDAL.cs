@@ -145,8 +145,9 @@ namespace DAL.BDaccess
                 .OrderBy(c => c.Date);
 
             var lines = filteredCandles
-                .Select(c => new LineItem(c.Date, c.Open / 100.0))
+                .Select(c => new LineItem(c.Date, c.Close / 100.00))
                 .ToArray();
+            lines[lines.Length - 1].Value = candles.LastOrDefault().Close / 100.00;
 
             return lines;
         }
