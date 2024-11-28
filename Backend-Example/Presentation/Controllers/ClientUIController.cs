@@ -213,9 +213,9 @@ public static class ClientUIController
 
                 UserDAL userDAL = new(dbContext, userManager);
                 Logic.Functions.User user = new();
-                bool result = await user.SellUserStock(userDAL, userID, ticker, amount ?? 0, price ?? 0);
+                bool success = await user.SellUserStock(userDAL, userID, ticker, amount ?? 0, price ?? 0);
 
-                return Results.Json(new { result });
+                return Results.Json(new { success });
             }
         );
     }
