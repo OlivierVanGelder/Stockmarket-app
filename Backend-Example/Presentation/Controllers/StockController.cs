@@ -29,10 +29,10 @@ namespace Backend_Example.Controllers
 
             stocks
                 .MapGet(
-                    "/{type}/{ticker}/{interval}/{start}/{end}",
+                    "/{ticker}",
                     async (
-                        string type,
                         string ticker,
+                        string type,
                         double interval,
                         double start,
                         double end,

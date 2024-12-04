@@ -157,6 +157,9 @@ function Graphs() {
                 {
                     method: 'POST',
                     headers: {
+                        Authorization: `Bearer ${sessionStorage.getItem(
+                            'token'
+                        )}`,
                         'Access-Control-Allow-Origin': '*',
                         'Content-Type': 'application/json'
                     },
@@ -190,7 +193,10 @@ function Graphs() {
         fetch(
             `https://localhost:42069/accounts/stock/amount?userID=${userId}&ticker=${ticker}`,
             {
-                method: 'GET'
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem('token')}`
+                }
             }
         )
             .then(response => response.json())

@@ -11,6 +11,7 @@ namespace Backend_Example.Controllers
         public static void Usercontroller(this WebApplication app, IConfiguration configuration)
         {
             var users = app.MapGroup("/users").WithTags("Users");
+            users.RequireAuthorization();
 
             users.MapGet(
                 "/{id}/login",
@@ -32,7 +33,7 @@ namespace Backend_Example.Controllers
 
                     string userId = await userDAL.GetUserId(loginRequest.Name);
 
-                    string secretKey = configuration["SecretKey:Key"];
+                    string secretKey = configuration["Jwt:Key"];
 
                     var token = JwtHelper.GenerateToken(loginRequest.Name, secretKey);
                     return Results.Json(new { token, userId });
@@ -57,7 +58,7 @@ namespace Backend_Example.Controllers
                         registerRequest.Password
                     );
 
-                    string secretKey = configuration["SecretKey:Key"];
+                    string secretKey = configuration["Jwt:Key"];
                     var token = JwtHelper.GenerateToken(registerRequest.Name, secretKey);
                     return Results.Json(new { Token = token });
                 }
