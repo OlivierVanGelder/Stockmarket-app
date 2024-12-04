@@ -1,8 +1,4 @@
-﻿using System.Data.Entity;
-using System.Net.WebSockets;
-using System.Text;
-using System.Text.Json;
-using Backend_Example.Data.BDaccess;
+﻿using Backend_Example.Data.BDaccess;
 using Backend_Example.Models;
 using Logic.Functions;
 using Logic.Interfaces;
@@ -14,8 +10,10 @@ namespace Backend_Example.Controllers
     {
         public static void Usercontroller(this WebApplication app, IConfiguration configuration)
         {
-            app.MapPost(
-                "/accounts/login/verify",
+            var users = app.MapGroup("/users").WithTags("Users");
+
+            users.MapGet(
+                "/{id}/login",
                 async (
                     HttpContext context,
                     DbStockEngine dbContext,
@@ -40,8 +38,8 @@ namespace Backend_Example.Controllers
                     return Results.Json(new { token, userId });
                 }
             );
-            app.MapPost(
-                "/accounts/login/register",
+            users.MapPost(
+                "/",
                 async (
                     HttpContext context,
                     DbStockEngine dbContext,
@@ -64,47 +62,49 @@ namespace Backend_Example.Controllers
                     return Results.Json(new { Token = token });
                 }
             );
-            app.MapPost(
-                "/accounts/user/balance",
+            users.MapGet(
+                "/{id}/balance",
                 async (
+                    string id,
                     HttpContext context,
                     DbStockEngine dbContext,
                     UserManager<DAL.Tables.User> userManager
                 ) =>
                 {
-                    string userID = await context.Request.ReadFromJsonAsync<string>();
-                    if (userID == null)
+                    if (id == null)
                         return Results.BadRequest();
 
                     DAL.BDaccess.UserDAL userDAL = new(dbContext, userManager);
                     User user = new();
-                    double userBalance = await user.GetUserBalance(userDAL, userID);
+                    double userBalance = await user.GetUserBalance(userDAL, id);
 
                     return Results.Json(new { UserBalance = userBalance });
                 }
             );
-            app.MapPost(
-                "/accounts/user/name",
+            users.MapGet(
+                "/{id}/name",
                 async (
+                    string id,
                     HttpContext context,
                     DbStockEngine dbContext,
                     UserManager<DAL.Tables.User> userManager
                 ) =>
                 {
-                    string userID = await context.Request.ReadFromJsonAsync<string>();
-                    if (userID == null)
+                    if (id == null)
                         return Results.BadRequest();
 
                     DAL.BDaccess.UserDAL userDAL = new(dbContext, userManager);
                     User user = new();
-                    string userName = await user.GetUserName(userDAL, userID);
+                    string userName = await user.GetUserName(userDAL, id);
 
                     return Results.Json(new { UserName = userName });
                 }
             );
-            app.MapPost(
-                "/accounts/stock/buy",
+
+            users.MapPut(
+                "/{id}/stock",
                 async (
+                    string id,
                     HttpContext context,
                     DbStockEngine dbContext,
                     UserManager<DAL.Tables.User> userManager
@@ -112,94 +112,69 @@ namespace Backend_Example.Controllers
                 {
                     var stockTradeRequest =
                         await context.Request.ReadFromJsonAsync<StockTradeRequest>();
+
                     if (stockTradeRequest == null)
                         return Results.BadRequest("Invalid request payload.");
 
-                    string? userID = stockTradeRequest.UserID;
                     int? amount = stockTradeRequest.Amount;
                     string? ticker = stockTradeRequest.Ticker;
                     double? price = stockTradeRequest.Price;
+                    string? action = stockTradeRequest.Action?.ToLower(); // buy or sell
 
                     if (
-                        amount == null
-                        || ticker == null
-                        || string.IsNullOrEmpty(userID)
+                        string.IsNullOrEmpty(id)
                         || string.IsNullOrEmpty(ticker)
+                        || string.IsNullOrEmpty(action)
+                        || amount == null
                         || amount <= 0
                     )
                         return Results.BadRequest("Missing or invalid data.");
 
                     DAL.BDaccess.UserDAL userDAL = new(dbContext, userManager);
                     User user = new();
-                    bool success = await user.BuyUserStock(
-                        userDAL,
-                        userID,
-                        ticker,
-                        amount ?? 0,
-                        price ?? 0
-                    );
+                    bool success = false;
+
+                    switch (action)
+                    {
+                        case "buy":
+                            success = await user.BuyUserStock(
+                                userDAL,
+                                id,
+                                ticker,
+                                amount.Value,
+                                price ?? 0
+                            );
+                            break;
+                        case "sell":
+                            success = await user.SellUserStock(
+                                userDAL,
+                                id,
+                                ticker,
+                                amount.Value,
+                                price ?? 0
+                            );
+                            break;
+                        default:
+                            return Results.BadRequest("Invalid action. Must be 'buy' or 'sell'.");
+                    }
 
                     return Results.Json(new { success });
                 }
             );
 
-            app.MapPost(
-                "/accounts/stock/sell",
-                async (
-                    HttpContext context,
-                    DbStockEngine dbContext,
-                    UserManager<DAL.Tables.User> userManager
-                ) =>
-                {
-                    var stockTradeRequest =
-                        await context.Request.ReadFromJsonAsync<StockTradeRequest>();
-                    if (stockTradeRequest == null)
-                        return Results.BadRequest("Invalid request payload.");
+            users
+                .MapGet(
+                    "/{id}/stock/amount",
+                    async (string id, string ticker, IUserDAL userDAL) =>
+                    {
+                        User user = new();
+                        double result = await user.GetUserStockAmount(userDAL, id, ticker);
 
-                    string? userID = stockTradeRequest.UserID;
-                    int? amount = stockTradeRequest.Amount;
-                    string? ticker = stockTradeRequest.Ticker;
-                    double? price = stockTradeRequest.Price;
-
-                    if (
-                        amount == null
-                        || ticker == null
-                        || string.IsNullOrEmpty(userID)
-                        || string.IsNullOrEmpty(ticker)
-                        || amount <= 0
-                    )
-                        return Results.BadRequest("Missing or invalid data.");
-
-                    DAL.BDaccess.UserDAL userDAL = new(dbContext, userManager);
-                    User user = new();
-                    bool success = await user.SellUserStock(
-                        userDAL,
-                        userID,
-                        ticker,
-                        amount ?? 0,
-                        price ?? 0
-                    );
-
-                    return Results.Json(new { success });
-                }
-            );
-
-            app.MapGet(
-                "/accounts/stock/amount",
-                async (
-                    string userID,
-                    string ticker,
-                    IUserDAL userDAL
-                ) =>
-                {
-                    User user = new();
-                    double result = await user.GetUserStockAmount(userDAL, userID, ticker);
-
-                    return Results.Json(result);
-                }
-            )
-            .WithName("GetStockAmount")
-            .WithOpenApi();
+                        return Results.Json(result);
+                    }
+                )
+                .WithName("GetStockAmount")
+                .WithOpenApi();
         }
     }
 }

@@ -84,7 +84,7 @@ app.UseCors("AllowFrontend");
 
 // Enable WebSockets
 app.UseWebSockets();
-app.ClientUIcontroller(builder.Configuration);
+app.Stockcontroller(builder.Configuration);
 app.Usercontroller(builder.Configuration);
 
 app.Run();
