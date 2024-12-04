@@ -8,7 +8,7 @@ namespace Logic.Functions
     {
         private System.Timers.Timer _timer;
 
-        public StockDeletingInterval(double intervalInSeconds, StockDALinterface StockDAL)
+        public StockDeletingInterval(double intervalInSeconds, IStockDAL StockDAL)
         {
             _timer = new System.Timers.Timer(intervalInSeconds * 1000);
             _timer.Elapsed += (sender, e) => DeleteDuplicates(StockDAL);
@@ -21,7 +21,7 @@ namespace Logic.Functions
             _timer.Stop();
         }
 
-        private static void DeleteDuplicates(StockDALinterface StockDAL)
+        private static void DeleteDuplicates(IStockDAL StockDAL)
         {
             StockDAL.DeleteDuplicateStocks();
         }

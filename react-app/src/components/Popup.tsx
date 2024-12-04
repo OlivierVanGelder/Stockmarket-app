@@ -21,8 +21,8 @@ const Popup: React.FC<PopupProps> = ({
 }) => {
     const [amount, setAmount] = useState(0)
 
-    const handleAmountChange = (e: any) => {
-        setAmount(e.target.value)
+    const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setAmount(Number(e.target.value))
     }
 
     const handleSubmit = () => {

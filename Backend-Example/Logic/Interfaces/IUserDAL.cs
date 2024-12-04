@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Logic.Interfaces
 {
-    public interface UserDALinterface
+    public interface IUserDAL
     {
         string[] GetUsers();
         Task<bool> AddUserAsync(string name, string password);
@@ -17,5 +17,6 @@ namespace Logic.Interfaces
         Task<string> GetUserName(string userId);
         Task<bool> SellUserStock(string id, string ticker, int amount, double price);
         Task<bool> BuyUserStock(string id, string ticker, int amount, double price);
+        Task<double> GetUserStockAmount(string id, string ticker);
     }
 }

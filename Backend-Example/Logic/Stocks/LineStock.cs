@@ -10,7 +10,7 @@ namespace Backend_Example.Logic.Stocks
             DateTime startTime,
             DateTime endTime,
             TimeSpan interval,
-            StockDALinterface stockDal
+            IStockDAL stockDal
         )
         {
             Task<LineItem[]> values = stockDal.GetLineValues(stockName, startTime, endTime, interval);

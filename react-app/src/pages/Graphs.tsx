@@ -1,21 +1,23 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import '../App.css'
 import LineChart from '../components/LineChart'
-import CandleStickChart from '../components/CandleStickChart'
+import CandleStickChart, {
+    CandleGraphItem
+} from '../components/CandleStickChart'
 import ToggleButtonNotEmpty from '../components/ToggleButton'
 import Interval from '../Interval'
 import Popup from '../components/Popup'
 import { Button } from '@mui/material'
 import { styled } from '@mui/material/styles'
 
-const BuyButton = styled(Button)(({ theme }) => ({
+const BuyButton = styled(Button)(() => ({
     backgroundColor: '#16fa4f',
     color: '#FFFF',
     '&:hover': {
         backgroundColor: '#6df78f'
     }
 })) as typeof Button
-const SellButton = styled(Button)(({ theme }) => ({
+const SellButton = styled(Button)(() => ({
     backgroundColor: '#fa1616',
     color: '#FFFF',
     '&:hover': {
@@ -68,25 +70,30 @@ function convertToDays(date: Date): number {
     )
 }
 
-interface CandleDataItem {
-    x: Date
-    y: [number, number, number, number]
-    volume: number
+interface LineDataItem {
+    Date: string
+    Value: number
 }
 
 function Graphs() {
     const [candleSelected, setCandleSelected] = useState<boolean>(false)
     const [invalidData, setInvalidData] = useState<boolean>(false)
     const [ticker, setTicker] = useState<string>('APPL')
-    const [candleData, setCandleData] = useState<CandleDataItem[]>([])
+    const [candleData, setCandleData] = useState<CandleGraphItem[]>([])
     const [interval, setInterval] = useState<number>(1 / 24)
     const [startTimeString, setStartDay] = useState<string>('month')
     const [popupOpen, setPopupOpen] = useState(false)
     const [isBuy, setIsBuy] = useState(true)
     const [stockPrice, setStockPrice] = useState(100)
+    const [stockAmount, setStockAmount] = useState(0)
     const [chartData, setUserData] = useState<{
         labels: string[]
-        datasets: any[]
+        datasets: {
+            label: string
+            values: number[]
+            backgroundColor: string
+            borderColor: string
+        }[]
     }>({
         labels: [],
         datasets: []
@@ -141,7 +148,6 @@ function Graphs() {
             if (!success) {
                 return false
             }
-            alert(`You bought ${amount} stocks of ${ticker}.`)
             setUserBalance(userBalance - stockPrice * amount)
             closePopup()
             return true
@@ -173,12 +179,25 @@ function Graphs() {
             if (!success) {
                 return false
             }
-            alert(`You sold ${amount} stocks of ${ticker}.`)
             setUserBalance(userBalance + stockPrice * amount)
             closePopup()
             return true
         }
     }
+
+    useEffect(() => {
+        const userId = sessionStorage.getItem('userId')
+        fetch(
+            `https://localhost:42069/accounts/stock/amount?userID=${userId}&ticker=${ticker}`,
+            {
+                method: 'GET'
+            }
+        )
+            .then(response => response.json())
+            .then(data => {
+                setStockAmount(data)
+            })
+    }, [userBalance, ticker])
 
     useEffect(() => {
         const options: Record<string, Interval[]> = {
@@ -263,56 +282,54 @@ function Graphs() {
 
         socket.onmessage = event => {
             console.log('Received data:', event.data)
-            const newData = JSON.parse(event.data)
+            const newData = JSON.parse(event.data) as
+                | LineDataItem[]
+                | CandleGraphItem[]
             if (candleSelected) {
-                applyCandleData(newData)
+                applyCandleData(newData as CandleGraphItem[])
             } else {
-                applyLineData(ticker, newData)
+                applyLineData(ticker, newData as LineDataItem[])
             }
         }
     }, [interval, startTimeString, candleSelected, ticker])
 
-    const applyLineData = useCallback((ticker: string, data: any) => {
-        const labels = data.map((item: any) => item.Date)
-        if (labels.length != 0) {
-            setInvalidData(false)
-            data = data.map((item: any) => item.Value)
-            setStockPrice(data[data.length - 1])
-            console.log(data[data.length - 1])
-            setUserData({
-                labels,
-                datasets: [
-                    {
-                        label: `Stock Price for ${ticker}`,
-                        data,
-                        backgroundColor: 'rgb(242, 139, 130)',
-                        borderColor: 'rgb(242, 139, 130)'
-                    }
-                ]
-            })
-        } else {
-            setInvalidData(true)
-        }
-    }, [])
+    const applyLineData = useCallback(
+        (ticker: string, data: LineDataItem[]) => {
+            const labels = data.map(item => item.Date)
+            if (labels.length != 0) {
+                setInvalidData(false)
+                const values = data.map(item => item.Value)
+                setStockPrice(data[data.length - 1].Value)
+                setUserData({
+                    labels,
+                    datasets: [
+                        {
+                            label: `Stock Price for ${ticker}`,
+                            values,
+                            backgroundColor: 'rgb(242, 139, 130)',
+                            borderColor: 'rgb(242, 139, 130)'
+                        }
+                    ]
+                })
+            } else {
+                setInvalidData(true)
+            }
+        },
+        []
+    )
 
-    const applyCandleData = useCallback((data: any) => {
+    const applyCandleData = useCallback((data: CandleGraphItem[]) => {
         if (!Array.isArray(data) || !data.length) {
             setInvalidData(true)
             console.error('Invalid candle data received:', data)
             return
         }
         setInvalidData(false)
-        const formattedData: CandleDataItem[] = data.map((item: any) => ({
-            x: new Date(item.Date),
-            y: [item.Open, item.High, item.Low, item.Close],
-            volume: item.Volume
-        }))
-        setStockPrice(formattedData[formattedData.length - 1].y[3])
-        console.log(formattedData[formattedData.length - 1].y[3])
-        setCandleData(formattedData)
+        console.log('Candle data:', data)
+        setStockPrice(data[data.length - 1].Close)
+        setCandleData(data)
     }, [])
 
-    // Render options outside of JSX for readability
     const startTimeOptions = [
         'hour',
         'hours',
@@ -427,6 +444,7 @@ function Graphs() {
                 candleSelected={candleSelected}
                 setCandleSelected={setCandleSelected}
             />
+            <h2>Stock owned: {stockAmount}</h2>
             {invalidData ? (
                 <div>
                     <h1>Invalid Data</h1>
@@ -443,7 +461,7 @@ function Graphs() {
                                 margin: '35px'
                             }}
                         >
-                            <LineChart chartData={chartData} />
+                            <LineChart chartData={chartData.datasets} />
                         </div>
                     )}
                 </div>

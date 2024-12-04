@@ -6,7 +6,7 @@ const Login = () => {
     // Local state for storing username and password
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
-    const [errorMessage, setErrorMessage] = useState('')
+    const [errorMessage] = useState('')
     const [loginMessage, setLoginMessage] = useState<{
         color: string
         message: string
@@ -50,7 +50,7 @@ const Login = () => {
             setLoginMessage({ message: 'Login successful', color: 'green' })
         } catch (error) {
             setLoginMessage({
-                message: 'Error during logging in',
+                message: `Error during logging in: ${error}`,
                 color: 'red'
             })
         }

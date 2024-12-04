@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react'
 import './App.css'
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom'
 import Account from './pages/Account'
@@ -7,6 +6,7 @@ import Stock from './pages/Stock'
 import ProtectedRoute from './components/ProtectedRoute'
 import Login from './pages/Login'
 import Home from './pages/Home'
+import React from 'react'
 
 function App() {
     return (

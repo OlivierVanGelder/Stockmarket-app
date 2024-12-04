@@ -10,7 +10,7 @@ namespace Backend_Example.Logic.Stocks
             double startX,
             double endX,
             double intervalDays,
-            StockDALinterface stockDAL
+            IStockDAL stockDAL
         )
         {
             DateTime startDate = Converter.ConvertDigitToDate(startX);
@@ -102,7 +102,7 @@ namespace Backend_Example.Logic.Stocks
             return lowValue;
         }
 
-        public static string[] GetStockNames(StockDALinterface stockDAL)
+        public static string[] GetStockNames(IStockDAL stockDAL)
         {
             return stockDAL.GetStockNames();
         }

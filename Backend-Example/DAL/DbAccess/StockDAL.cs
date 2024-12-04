@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL.BDaccess
 {
-    public class StockDAL : StockDALinterface
+    public class StockDAL : IStockDAL
     {
         private readonly Backend_Example.Data.BDaccess.DbStockEngine _context;
 

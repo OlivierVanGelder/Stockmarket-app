@@ -7,7 +7,7 @@ using Backend_Example.Logic.Classes;
 
 namespace Logic.Interfaces
 {
-    public interface StockDALinterface
+    public interface IStockDAL
     {
         string[] GetStockNames();
         void WriteStocks(CandleItem[] c, string ticker);

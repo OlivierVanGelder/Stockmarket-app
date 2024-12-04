@@ -1,14 +1,14 @@
-declare module "apexcharts" {
+declare module 'apexcharts' {
     interface ApexOptions {
-      chart?: any;
-      title?: any;
-      annotations?: any;
-      tooltip?: any;
-      xaxis?: any;
-      yaxis?: any;
-      [key: string]: any; // This line allows adding any extra properties dynamically
+        chart?
+        title?
+        annotations?
+        tooltip?
+        xaxis?
+        yaxis?
+        [key: string] // This line allows adding any extra properties dynamically
     }
-  
-    const ApexCharts: any;
-    export default ApexCharts;
-  }  
+
+    const ApexCharts
+    export default ApexCharts
+}

@@ -8,7 +8,7 @@ namespace Logic.Functions
     {
         private System.Timers.Timer _timer;
 
-        public StockWritingInterval(double intervalInSeconds, StockDALinterface StockDAL)
+        public StockWritingInterval(double intervalInSeconds, IStockDAL StockDAL)
         {
             _timer = new System.Timers.Timer(intervalInSeconds * 1000);
             _timer.Elapsed += (sender, e) => WriteStocks(StockDAL);
@@ -21,7 +21,7 @@ namespace Logic.Functions
             _timer.Stop();
         }
 
-        private static void WriteStocks(StockDALinterface StockDAL)
+        private static void WriteStocks(IStockDAL StockDAL)
         {
             string[] names = StockDAL.GetStockNames();
             foreach (string name in names)

@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace DAL.BDaccess
 {
-    public class UserDAL : UserDALinterface
+    public class UserDAL : IUserDAL
     {
         private readonly DbStockEngine _context;
         private readonly UserManager<User> _userManager;
@@ -47,6 +47,7 @@ namespace DAL.BDaccess
                 return false;
             }
         }
+
         public async Task<bool> DeleteUser(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
@@ -96,6 +97,50 @@ namespace DAL.BDaccess
             }
         }
 
+        public async Task<bool> UpdateUserBalance(string id, double balance, double change)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+            {
+                return false;
+            }
+
+            user.BalanceInCents = (int)(balance * 100);
+            var result = await _userManager.UpdateAsync(user);
+            if (result.Succeeded)
+            {
+                return true;
+            }
+            else
+            {
+                foreach (var error in result.Errors)
+                {
+                    Debug.WriteLine(error.Description);
+                }
+
+                return false;
+            }
+        }
+
+        /// <exception cref="ArgumentException"></exception>
+        public async Task<double> GetUserStockAmount(string id, string ticker)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            var stock = _context.Stocks.FirstOrDefault(s => s.Ticker == ticker);
+            if (user == null || stock == null)
+            {
+                throw new ArgumentException("User or stock not found");
+            }
+            var userStock = _context.User_Stocks.FirstOrDefault(us =>
+                us.UserId == user.Id && us.StockId == stock.Id
+            );
+            if (userStock == null)
+            {
+                return 0;
+            }
+            return userStock.StockAmount;
+        }
+
         public async Task<bool> BuyUserStock(string id, string ticker, int amount, double price)
         {
             var user = await _userManager.FindByIdAsync(id);
@@ -106,8 +151,8 @@ namespace DAL.BDaccess
             }
 
             var userStock = _context.User_Stocks.FirstOrDefault(us =>
-                           us.UserId == user.Id && us.StockId == stock.Id
-                                      );
+                us.UserId == user.Id && us.StockId == stock.Id
+            );
             if (userStock == null)
             {
                 var newUserStock = new User_Stock
@@ -123,7 +168,7 @@ namespace DAL.BDaccess
                 userStock.StockAmount += amount;
             }
             double oldBalance = await GetUserBalance(id);
-            double newBalance = price * amount + oldBalance;
+            double newBalance = oldBalance - (price * amount);
             await UpdateUserBalance(id, newBalance);
 
             _context.SaveChanges();
@@ -140,8 +185,8 @@ namespace DAL.BDaccess
             }
 
             var userStock = _context.User_Stocks.FirstOrDefault(us =>
-                           us.UserId == user.Id && us.StockId == stock.Id
-                                      );
+                us.UserId == user.Id && us.StockId == stock.Id
+            );
             if (userStock == null)
             {
                 var newUserStock = new User_Stock
@@ -154,10 +199,14 @@ namespace DAL.BDaccess
             }
             else
             {
+                if (userStock.StockAmount - amount < 0)
+                {
+                    return false;
+                }
                 userStock.StockAmount -= amount;
             }
             double oldBalance = await GetUserBalance(id);
-            double newBalance = oldBalance - (price * amount);
+            double newBalance = oldBalance + (price * amount);
             await UpdateUserBalance(id, newBalance);
 
             _context.SaveChanges();
@@ -186,6 +235,7 @@ namespace DAL.BDaccess
 
             return userBalance;
         }
+
         public async Task<string> GetUserName(string id)
         {
             var user = await _userManager.FindByIdAsync(id);

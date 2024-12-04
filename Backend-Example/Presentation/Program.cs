@@ -53,7 +53,8 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.Password.RequireNonAlphanumeric = false;
 });
 
-builder.Services.AddScoped<StockDALinterface, StockDAL>();
+builder.Services.AddScoped<IUserDAL, UserDAL>();
+builder.Services.AddScoped<IStockDAL, StockDAL>();
 builder.Services.AddScoped<LineStock>();
 
 builder.Services.AddCors(policyBuilder =>
@@ -84,5 +85,6 @@ app.UseCors("AllowFrontend");
 // Enable WebSockets
 app.UseWebSockets();
 app.ClientUIcontroller(builder.Configuration);
+app.Usercontroller(builder.Configuration);
 
 app.Run();
