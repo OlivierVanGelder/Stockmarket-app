@@ -21,6 +21,10 @@ namespace Logic.Functions
 
         public async Task<bool> AddUser(IUserDAL userDal, string name, string password)
         {
+            if (await userDal.VerifyNewUser(name))
+            {
+                return false;
+            }
             return await userDal.AddUserAsync(name, password);
         }
 
@@ -52,11 +56,7 @@ namespace Logic.Functions
         }
 
         /// <exception cref="ArgumentException"></exception>
-        public async Task<double> GetUserStockAmount(
-            IUserDAL userDal,
-            string id,
-            string ticker
-        )
+        public async Task<double> GetUserStockAmount(IUserDAL userDal, string id, string ticker)
         {
             try
             {

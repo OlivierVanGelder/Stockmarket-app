@@ -40,15 +40,12 @@ async function fetchUserBalance(): Promise<number> {
     try {
         const userId = sessionStorage.getItem('userId')
         const response = await fetch(
-            'https://localhost:42069/accounts/user/balance',
+            `https://localhost:42069/users/${userId}/balance`,
             {
-                method: 'POST',
+                method: 'GET',
                 headers: {
-                    'Access-Control-Allow-Origin': '*',
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include',
-                body: JSON.stringify(userId)
+                    Authorization: `Bearer ${sessionStorage.getItem('token')}`
+                }
             }
         )
         if (!response.ok) throw new Error('Failed to fetch user balance')
@@ -104,7 +101,7 @@ function Graphs() {
         new Interval(1, '1 day')
     ])
     const socket = useMemo(
-        () => new WebSocket(`wss://localhost:42069/StockWS`),
+        () => new WebSocket(`wss://localhost:42069/stocks/StockWS`),
         []
     )
 
@@ -119,79 +116,52 @@ function Graphs() {
     const closePopup = () => setPopupOpen(false)
 
     async function handleInvest(amount: number): Promise<boolean> {
-        const userId = sessionStorage.getItem('userId')
-        if (isBuy) {
-            const response = await fetch(
-                'https://localhost:42069/accounts/stock/buy',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Access-Control-Allow-Origin': '*',
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        userId,
-                        ticker,
-                        amount,
-                        Price: stockPrice
-                    })
-                }
-            )
-
-            if (!response.ok) {
-                return false
-            }
-
-            const data = await response.json()
-            const success: boolean = data.success
-            if (!success) {
-                return false
-            }
-            setUserBalance(userBalance - stockPrice * amount)
-            closePopup()
-            return true
-        } else {
-            const response = await fetch(
-                'https://localhost:42069/accounts/stock/sell',
-                {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${sessionStorage.getItem(
-                            'token'
-                        )}`,
-                        'Access-Control-Allow-Origin': '*',
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        userId,
-                        ticker,
-                        amount,
-                        Price: stockPrice
-                    })
-                }
-            )
-
-            if (!response.ok) {
-                return false
-            }
-
-            const data = await response.json()
-            const success: boolean = data.success
-            if (!success) {
-                return false
-            }
-            setUserBalance(userBalance + stockPrice * amount)
-            closePopup()
-            return true
+        if (invalidData) {
+            alert('Cannot trade with invalid data')
+            return false
         }
+
+        const userId = sessionStorage.getItem('userId')
+        const response = await fetch(
+            `https://localhost:42069/users/${userId}/stock`,
+            {
+                method: 'PUT',
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    amount,
+                    ticker,
+                    Price: stockPrice,
+                    Action: isBuy ? 'buy' : 'sell'
+                })
+            }
+        )
+
+        if (!response.ok) {
+            return false
+        }
+
+        const data = await response.json()
+        const success: boolean = data.success
+        if (!success) {
+            return false
+        }
+        if (isBuy) {
+            setUserBalance(userBalance - stockPrice * amount)
+        } else {
+            setUserBalance(userBalance + stockPrice * amount)
+        }
+        closePopup()
+        return true
     }
 
     useEffect(() => {
         const userId = sessionStorage.getItem('userId')
         fetch(
-            `https://localhost:42069/accounts/stock/amount?userID=${userId}&ticker=${ticker}`,
+            `https://localhost:42069/users/${userId}/stock/amount?ticker=${ticker}`,
             {
                 method: 'GET',
                 headers: {

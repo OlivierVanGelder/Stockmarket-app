@@ -10,6 +10,7 @@ namespace DAL.BDaccess
 {
     public class UserDAL : IUserDAL
     {
+        private const int INITIALBALANCECENTS = 500000;
         private readonly DbStockEngine _context;
         private readonly UserManager<User> _userManager;
 
@@ -27,12 +28,10 @@ namespace DAL.BDaccess
 
         public async Task<bool> AddUserAsync(string name, string password)
         {
-            var user = new User { UserName = name };
+            var user = new User { UserName = name, BalanceInCents = INITIALBALANCECENTS };
 
-            // Create the user using the UserManager
             var result = await _userManager.CreateAsync(user, password);
 
-            // Check if user creation was successful
             if (result.Succeeded)
             {
                 return true;
@@ -46,6 +45,12 @@ namespace DAL.BDaccess
 
                 return false;
             }
+        }
+
+        public async Task<bool> VerifyNewUser(string username)
+        {
+            var user = await _userManager.FindByNameAsync(username);
+            return user != null;
         }
 
         public async Task<bool> DeleteUser(string id)

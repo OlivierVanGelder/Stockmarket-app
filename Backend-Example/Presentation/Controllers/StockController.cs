@@ -1,7 +1,6 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Backend_Example.Data.BDaccess;
 using Backend_Example.Logic.Classes;
 using Backend_Example.Logic.Stocks;

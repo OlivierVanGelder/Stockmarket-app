@@ -16,21 +16,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddAuthentication().AddCookie();
-
-builder.Services.AddAuthorization();
-
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<Backend_Example.Data.BDaccess.DbStockEngine>(options =>
     options.UseSqlServer(connectionString)
 );
-
-builder
-    .Services.AddIdentity<User, IdentityRole>()
-    .AddEntityFrameworkStores<Backend_Example.Data.BDaccess.DbStockEngine>()
-    .AddDefaultTokenProviders();
 
 builder.Services.AddCors(options =>
 {
@@ -45,6 +36,65 @@ builder.Services.AddCors(options =>
                 .AllowCredentials();
         }
     );
+});
+
+builder
+    .Services.AddIdentity<User, IdentityRole>()
+    .AddEntityFrameworkStores<Backend_Example.Data.BDaccess.DbStockEngine>()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddAuthorization();
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            if (context.Exception != null)
+            {
+                context.Response.StatusCode = 401;
+                context.Response.ContentType = "application/json";
+                var responseMessage = new { message = "Authentication failed" };
+                return context.Response.WriteAsJsonAsync(responseMessage);
+            }
+
+            return Task.CompletedTask;
+        },
+
+        OnChallenge = context =>
+        {
+            if (!context.Response.HasStarted)
+            {
+                context.HandleResponse();
+
+                context.Response.StatusCode = 401;
+                context.Response.ContentType = "application/json";
+
+                var responseMessage = new { message = "Authentication required" };
+                return context.Response.WriteAsJsonAsync(responseMessage);
+            }
+
+            return Task.CompletedTask;
+        }
+    };
+
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])
+        ),
+    };
 });
 
 builder.Services.Configure<IdentityOptions>(options =>
@@ -66,49 +116,6 @@ builder.Services.AddCors(policyBuilder =>
         policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()
     )
 );
-builder
-    .Services.AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
-    .AddJwtBearer(options =>
-    {
-        options.Events = new JwtBearerEvents
-        {
-            OnAuthenticationFailed = context =>
-            {
-                context.Response.StatusCode = 401;
-                context.Response.ContentType = "application/json";
-                return context.Response.WriteAsync(
-                    JsonSerializer.Serialize(new { message = "Authentication failed" })
-                );
-            },
-            OnChallenge = context =>
-            {
-                context.HandleResponse();
-
-                context.Response.StatusCode = 401;
-                context.Response.ContentType = "application/json";
-                return context.Response.WriteAsync(
-                    JsonSerializer.Serialize(new { message = "Authentication required" })
-                );
-            },
-        };
-
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])
-            ),
-        };
-    });
 
 builder.Services.AddWebSockets(options => { });
 
