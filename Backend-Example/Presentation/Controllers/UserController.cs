@@ -37,7 +37,7 @@ namespace Backend_Example.Controllers
 
                     string secretKey = configuration["Jwt:Key"];
 
-                    var token = JwtHelper.GenerateToken(username, secretKey);
+                    var token = JwtHelper.GenerateToken(username, userId, secretKey);
                     return Results.Json(new { token, userId });
                 }
             );
@@ -66,26 +66,72 @@ namespace Backend_Example.Controllers
                         return Results.Conflict();
                     string userId = await userDAL.GetUserId(registerRequest.Name);
                     string secretKey = configuration["Jwt:Key"];
-                    var token = JwtHelper.GenerateToken(registerRequest.Name, secretKey);
+                    var token = JwtHelper.GenerateToken(registerRequest.Name, userId, secretKey);
                     return Results.Json(new { Token = token, UserId = userId });
                 }
             );
+
             users
-                .MapGet(
-                    "/{id}/balance",
+                .MapDelete(
+                    "/{userId}",
                     async (
-                        string id,
+                        string userId,
                         HttpContext context,
                         DbStockEngine dbContext,
                         UserManager<DAL.Tables.User> userManager
                     ) =>
                     {
-                        if (id == null)
+                        if (UserAuthorization(userId, context) != Results.Ok())
+                        {
+                            return UserAuthorization(userId, context);
+                        }
+
+                        string? userIdFromToken = context.User.FindFirst("userId")?.Value;
+
+                        if (string.IsNullOrEmpty(userIdFromToken))
+                            return Results.Unauthorized();
+
+                        if (userIdFromToken != userId)
+                            return Results.Forbid();
+
+                        DAL.BDaccess.UserDAL userDAL = new(dbContext, userManager);
+                        bool succes = await userDAL.DeleteUser(userId);
+                        if (!succes)
+                            return Results.Conflict();
+                        return Results.Ok();
+                    }
+                )
+                .RequireAuthorization();
+
+            users
+                .MapGet(
+                    "/{userId}/balance",
+                    async (
+                        string userId,
+                        HttpContext context,
+                        DbStockEngine dbContext,
+                        UserManager<DAL.Tables.User> userManager
+                    ) =>
+                    {
+                        if (UserAuthorization(userId, context) != Results.Ok())
+                        {
+                            return UserAuthorization(userId, context);
+                        }
+
+                        if (userId == null)
                             return Results.BadRequest();
+
+                        string? userIdFromToken = context.User.FindFirst("userId")?.Value;
+
+                        if (string.IsNullOrEmpty(userIdFromToken))
+                            return Results.Unauthorized();
+
+                        if (userIdFromToken != userId)
+                            return Results.Forbid();
 
                         DAL.BDaccess.UserDAL userDAL = new(dbContext, userManager);
                         User user = new();
-                        double userBalance = await user.GetUserBalance(userDAL, id);
+                        double userBalance = await user.GetUserBalance(userDAL, userId);
 
                         return Results.Json(new { UserBalance = userBalance });
                     }
@@ -102,6 +148,11 @@ namespace Backend_Example.Controllers
                         UserManager<DAL.Tables.User> userManager
                     ) =>
                     {
+                        if (UserAuthorization(id, context) != Results.Ok())
+                        {
+                            return UserAuthorization(id, context);
+                        }
+
                         if (id == null)
                             return Results.BadRequest();
 
@@ -124,6 +175,11 @@ namespace Backend_Example.Controllers
                         UserManager<DAL.Tables.User> userManager
                     ) =>
                     {
+                        if (UserAuthorization(id, context) != Results.Ok())
+                        {
+                            return UserAuthorization(id, context);
+                        }
+
                         var stockTradeRequest =
                             await context.Request.ReadFromJsonAsync<StockTradeRequest>();
 
@@ -182,8 +238,13 @@ namespace Backend_Example.Controllers
             users
                 .MapGet(
                     "/{id}/stock/amount",
-                    async (string id, string ticker, IUserDAL userDAL) =>
+                    async (string id, string ticker, IUserDAL userDAL, HttpContext context) =>
                     {
+                        if (UserAuthorization(id, context) != Results.Ok())
+                        {
+                            return UserAuthorization(id, context);
+                        }
+
                         User user = new();
                         double result = await user.GetUserStockAmount(userDAL, id, ticker);
 
@@ -193,6 +254,21 @@ namespace Backend_Example.Controllers
                 .RequireAuthorization()
                 .WithName("GetStockAmount")
                 .WithOpenApi();
+        }
+
+        private static IResult UserAuthorization(string userId, HttpContext context)
+        {
+            if (userId == null)
+                return Results.BadRequest();
+
+            string? userIdFromToken = context.User.FindFirst("userId")?.Value;
+
+            if (string.IsNullOrEmpty(userIdFromToken))
+                return Results.Unauthorized();
+
+            if (userIdFromToken != userId)
+                return Results.Forbid();
+            return Results.Ok();
         }
     }
 }

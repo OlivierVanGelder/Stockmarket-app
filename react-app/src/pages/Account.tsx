@@ -7,15 +7,13 @@ async function fetchUserBalance(): Promise<number> {
     try {
         const userId = sessionStorage.getItem('userId')
         const response = await fetch(
-            'https://localhost:42069/accounts/user/balance',
+            `https://localhost:42069/users/${userId}/balance`,
             {
-                method: 'POST',
+                method: 'GET',
                 headers: {
-                    'Access-Control-Allow-Origin': '*',
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${sessionStorage.getItem('token')}`
                 },
-                credentials: 'include',
-                body: JSON.stringify(userId)
+                credentials: 'include'
             }
         )
         if (!response.ok) throw new Error('Failed to fetch user balance')
@@ -31,15 +29,13 @@ async function fetchUserName(): Promise<string> {
     try {
         const userId = sessionStorage.getItem('userId')
         const response = await fetch(
-            'https://localhost:42069/accounts/user/name',
+            `https://localhost:42069/users/${userId}/name`,
             {
-                method: 'POST',
+                method: 'GET',
                 headers: {
-                    'Access-Control-Allow-Origin': '*',
-                    'Content-Type': 'application/json'
+                    Authorization: `Bearer ${sessionStorage.getItem('token')}`
                 },
-                credentials: 'include',
-                body: JSON.stringify(userId)
+                credentials: 'include'
             }
         )
         if (!response.ok) throw new Error('Failed to fetch user balance')

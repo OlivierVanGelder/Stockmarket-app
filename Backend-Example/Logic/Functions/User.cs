@@ -28,7 +28,7 @@ namespace Logic.Functions
             return await userDal.AddUserAsync(name, password);
         }
 
-        public async Task<bool> Deleteuser(IUserDAL userDal, string userId)
+        public async Task<bool> DeleteUser(IUserDAL userDal, string userId)
         {
             return await userDal.DeleteUser(userId);
         }

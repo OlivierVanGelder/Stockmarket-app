@@ -44,58 +44,59 @@ builder
     .AddDefaultTokenProviders();
 
 builder.Services.AddAuthorization();
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.Events = new JwtBearerEvents
+builder
+    .Services.AddAuthentication(options =>
     {
-        OnAuthenticationFailed = context =>
-        {
-            if (context.Exception != null)
-            {
-                context.Response.StatusCode = 401;
-                context.Response.ContentType = "application/json";
-                var responseMessage = new { message = "Authentication failed" };
-                return context.Response.WriteAsJsonAsync(responseMessage);
-            }
-
-            return Task.CompletedTask;
-        },
-
-        OnChallenge = context =>
-        {
-            if (!context.Response.HasStarted)
-            {
-                context.HandleResponse();
-
-                context.Response.StatusCode = 401;
-                context.Response.ContentType = "application/json";
-
-                var responseMessage = new { message = "Authentication required" };
-                return context.Response.WriteAsJsonAsync(responseMessage);
-            }
-
-            return Task.CompletedTask;
-        }
-    };
-
-    options.TokenValidationParameters = new TokenValidationParameters
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])
-        ),
-    };
-});
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                if (context.Exception != null)
+                {
+                    context.Response.StatusCode = 401;
+                    context.Response.ContentType = "application/json";
+                    var responseMessage = new { message = "Authentication failed" };
+                    return context.Response.WriteAsJsonAsync(responseMessage);
+                }
+
+                return Task.CompletedTask;
+            },
+
+            OnChallenge = context =>
+            {
+                if (!context.Response.HasStarted)
+                {
+                    context.HandleResponse();
+
+                    context.Response.StatusCode = 401;
+                    context.Response.ContentType = "application/json";
+
+                    var responseMessage = new { message = "Authentication required" };
+                    return context.Response.WriteAsJsonAsync(responseMessage);
+                }
+
+                return Task.CompletedTask;
+            },
+        };
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])
+            ),
+        };
+    });
 
 builder.Services.Configure<IdentityOptions>(options =>
 {
