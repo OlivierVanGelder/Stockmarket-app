@@ -18,11 +18,8 @@ namespace TestStockEngine
         [DataRow("ZZZZ", 100)]
         public void TestConvertWordToNumber(string tickername, int expected)
         {
-            // Arrange
-            Ticker ticker = new Ticker();
-
             // Act
-            int result = ticker.ConvertWordToNumber(tickername);
+            int result = Converter.ConvertWordToNumber(tickername);
 
             // Assert
             Assert.AreEqual(expected, result);

@@ -1,282 +1,449 @@
-import React from "react";
-import { useState, useEffect } from "react";
-import "../App.css";
-import LineChart from "../components/LineChart";
-import CandleStickChart from "../components/CandleStickChart";
-import CandleItem from "../CandleItem";
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import '../App.css'
+import LineChart from '../components/LineChart'
+import CandleStickChart, {
+    CandleGraphItem
+} from '../components/CandleStickChart'
+import ToggleButtonNotEmpty from '../components/ToggleButton'
+import Interval from '../Interval'
+import Popup from '../components/Popup'
+import { Button } from '@mui/material'
+import { styled } from '@mui/material/styles'
 
-async function fetchStockData(
-  ticker: string,
-  interval: number = 1,
-  startDay: number,
-  endDay: number
-) {
-  try {
-    const response = await fetch(
-      `https://localhost:42069/stock?ticker=${ticker}&interval=${interval}&start=${startDay}&end=${endDay}`
-    );
-    if (!response.ok) {
-      throw new Error("Failed to fetch stock data");
+const BuyButton = styled(Button)(() => ({
+    backgroundColor: '#16fa4f',
+    color: '#FFFF',
+    '&:hover': {
+        backgroundColor: '#6df78f'
     }
-    return await response.json();
-  } catch (error) {
-    console.error(`Error fetching data for ${ticker}:`, error);
-    return null;
-  }
-}
-
-async function fetchStockNames() {
-  try {
-    const response = await fetch("https://localhost:42069/stocknames");
-    if (!response.ok) {
-      throw new Error("Failed to fetch stock names");
+})) as typeof Button
+const SellButton = styled(Button)(() => ({
+    backgroundColor: '#fa1616',
+    color: '#FFFF',
+    '&:hover': {
+        backgroundColor: '#f76d6d'
     }
-    return await response.json();
-  } catch (error) {
-    console.error("Error fetching stock names:", error);
-    return [];
-  }
+})) as typeof Button
+
+async function fetchStockNames(): Promise<string[]> {
+    try {
+        const response = await fetch('https://localhost:42069/stocks/names')
+        if (!response.ok) throw new Error('Failed to fetch stock names')
+        return await response.json()
+    } catch (error) {
+        console.error('Error fetching stock names:', error)
+        return []
+    }
 }
 
-async function fetchCandleStockData(
-  ticker: string,
-  interval: number = 1,
-  startDay: number,
-  endDay: number
-): Promise<CandleItem[]> {
-  try {
-    const response = await fetch(
-      `https://localhost:42069/candlestock?ticker=${ticker}&interval=${interval}&start=${startDay}&end=${endDay}`
-    ).then((res) => res.json() as Promise<CandleItem[]>);
-    return await response;
-  } catch (error) {
-    console.error(`Error fetching data for ${ticker}:`, error);
-    return [];
-  }
+async function fetchUserBalance(): Promise<number> {
+    try {
+        const userId = sessionStorage.getItem('userId')
+        const response = await fetch(
+            `https://localhost:42069/users/${userId}/balance`,
+            {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem('token')}`
+                }
+            }
+        )
+        if (!response.ok) throw new Error('Failed to fetch user balance')
+        const data = await response.json()
+        return await data.userBalance
+    } catch (error) {
+        console.error('Error fetching user balance:', error)
+        return 0
+    }
 }
 
-function extractData(
-  stockAmount: number,
-  interval: number = 1, // Interval in days
-  startDay: number
-) {
-  const labels: string[] = [];
+function convertToDays(date: Date): number {
+    const referenceDate = new Date('2020-11-01T12:00:00Z')
+    return parseFloat(
+        (
+            (date.getTime() - referenceDate.getTime()) /
+            (1000 * 60 * 60 * 24)
+        ).toFixed(10)
+    )
+}
 
-  // Base date is "1980-01-01T12:00:00"
-  const baseDate = new Date("1980-01-01T12:00:00");
-
-  for (let i = 0; i < stockAmount; i++) {
-    // Calculate the total increment in days, hours, or minutes
-    const totalIncrement = i * interval + startDay;
-    const currentDate = new Date(baseDate);
-    currentDate.setDate(baseDate.getDate() + Math.floor(totalIncrement));
-    const fractionalPart = totalIncrement - Math.floor(totalIncrement);
-    currentDate.setHours(
-      baseDate.getHours() + Math.floor(fractionalPart / 0.04166666667)
-    );
-    const remainingFraction = fractionalPart % 0.04166666667;
-    currentDate.setMinutes(
-      baseDate.getMinutes() + Math.floor(remainingFraction / 0.0006944444444)
-    );
-    // Format the date as "YYYY-MM-DDTHH:mm"
-    const formattedDate = currentDate.toISOString().slice(0, 16);
-    labels.push(formattedDate);
-  }
-
-  return {
-    labels: labels,
-  };
+interface LineDataItem {
+    Date: string
+    Value: number
 }
 
 function Graphs() {
-  const [userDataIBM, setUserDataIBM] = useState<{
-    labels: string[];
-    datasets: any[];
-  }>({
-    labels: [],
-    datasets: [],
-  });
-  const [userDataAMZN, setUserDataAMZN] = useState<{
-    labels: string[];
-    datasets: any[];
-  }>({
-    labels: [],
-    datasets: [],
-  });
-  const [userDataTSLA, setUserDataTSLA] = useState<{
-    labels: string[];
-    datasets: any[];
-  }>({
-    labels: [],
-    datasets: [],
-  });
-  const [userDataAPPL, setUserDataAPPL] = useState<{
-    labels: string[];
-    datasets: any[];
-  }>({
-    labels: [],
-    datasets: [],
-  });
-  const [userDataGOOG, setUserDataGOOG] = useState<{
-    labels: string[];
-    datasets: any[];
-  }>({
-    labels: [],
-    datasets: [],
-  });
-  const [userDataMSFT, setUserDataMSFT] = useState<{
-    labels: string[];
-    datasets: any[];
-  }>({
-    labels: [],
-    datasets: [],
-  });
+    const [candleSelected, setCandleSelected] = useState<boolean>(false)
+    const [invalidData, setInvalidData] = useState<boolean>(false)
+    const [ticker, setTicker] = useState<string>('APPL')
+    const [candleData, setCandleData] = useState<CandleGraphItem[]>([])
+    const [interval, setInterval] = useState<number>(1 / 24)
+    const [startTimeString, setStartDay] = useState<string>('month')
+    const [popupOpen, setPopupOpen] = useState(false)
+    const [isBuy, setIsBuy] = useState(true)
+    const [stockPrice, setStockPrice] = useState(100)
+    const [stockAmount, setStockAmount] = useState(0)
+    const [chartData, setUserData] = useState<{
+        labels: string[]
+        datasets: {
+            label: string
+            values: number[]
+            backgroundColor: string
+            borderColor: string
+        }[]
+    }>({
+        labels: [],
+        datasets: []
+    })
+    const [stockNames, setStockNames] = useState<string[]>([])
+    const [userBalance, setUserBalance] = useState<number>(0)
+    const [intervalOptions, setIntervalOptions] = useState<Interval[]>([
+        new Interval(1, '1 day')
+    ])
+    const socket = useMemo(
+        () => new WebSocket(`wss://localhost:42069/stocks/StockWS`),
+        []
+    )
 
-  const [candleData, setCandleData] = useState<CandleDataItem[]>([]);
+    useEffect(() => {
+        fetchStockNames().then(setStockNames)
+        fetchUserBalance().then(setUserBalance)
+    }, [])
 
-  const userDatas = [
-    userDataIBM,
-    userDataAMZN,
-    userDataTSLA,
-    userDataAPPL,
-    userDataGOOG,
-    userDataMSFT,
-  ];
-
-  var [stocknames, setStockNames] = useState<string[]>([]);
-  useEffect(() => {
-    const fetchData = async () => {
-      setStockNames(await fetchStockNames());
-    };
-    fetchData();
-  }, []);
-
-  async function setUserData(
-    ticker: string,
-    interval: number,
-    startDay: number,
-    endDay: number,
-    setUserData: any,
-    color: string[]
-  ) {
-    const newStockData = await fetchStockData(
-      ticker,
-      interval,
-      startDay,
-      endDay
-    );
-    if (newStockData) {
-      const extractedData = extractData(
-        newStockData.length,
-        interval,
-        startDay
-      );
-      setUserData({
-        labels: extractedData.labels,
-        datasets: [
-          {
-            label: `Stock Price ${ticker}`,
-            data: newStockData,
-            backgroundColor: color,
-            borderColor: color,
-          },
-        ],
-      });
+    const openPopup = () => {
+        setPopupOpen(true)
     }
-  }
+    const closePopup = () => setPopupOpen(false)
 
-  interface CandleDataItem {
-    x: Date;
-    y: [open: number, high: number, low: number, close: number];
-    volume: number;
-  }
+    async function handleInvest(amount: number): Promise<boolean> {
+        if (invalidData) {
+            alert('Cannot trade with invalid data')
+            return false
+        }
 
-  async function getUserCandleData(
-    ticker: string,
-    startDay: number,
-    endDay: number,
-    interval?: number
-  ) {
-    if (!interval) {
-      interval = (endDay - startDay) / 150;
+        const userId = sessionStorage.getItem('userId')
+        const response = await fetch(
+            `https://localhost:42069/users/${userId}/stock`,
+            {
+                method: 'PUT',
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    amount,
+                    ticker,
+                    Price: stockPrice,
+                    Action: isBuy ? 'buy' : 'sell'
+                })
+            }
+        )
+
+        if (!response.ok) {
+            return false
+        }
+
+        const data = await response.json()
+        const success: boolean = data.success
+        if (!success) {
+            return false
+        }
+        if (isBuy) {
+            setUserBalance(userBalance - stockPrice * amount)
+        } else {
+            setUserBalance(userBalance + stockPrice * amount)
+        }
+        closePopup()
+        return true
     }
 
-    const newCandleData: CandleItem[] = await fetchCandleStockData(
-      ticker,
-      interval,
-      startDay,
-      endDay
-    );
-    if (newCandleData) {
-      const extractedData = extractData(
-        newCandleData.length,
-        interval,
-        startDay
-      );
-      console.log(extractedData);
-      for (let i = 0; i < newCandleData.length; i++) {
-        newCandleData[i].date = new Date(extractedData.labels[i]);
-      }
-      console.log(newCandleData);
-      const candleData = newCandleData.map(
-        (item) =>
-          ({
-            x: item.date, // Assuming timestamp is in seconds
-            y: [item.open, item.high, item.low, item.close],
-            volume: item.volume,
-          } as CandleDataItem)
-      );
-      console.log(candleData);
+    useEffect(() => {
+        const userId = sessionStorage.getItem('userId')
+        fetch(
+            `https://localhost:42069/users/${userId}/stock/amount?ticker=${ticker}`,
+            {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem('token')}`
+                }
+            }
+        )
+            .then(response => response.json())
+            .then(data => {
+                setStockAmount(data)
+            })
+    }, [userBalance, ticker])
 
-      return candleData;
-    }
-    return [];
-  }
+    useEffect(() => {
+        const options: Record<string, Interval[]> = {
+            hour: [new Interval(0.0006944444444, '1 min')],
+            hours: [
+                new Interval(0.0006944444444, '1 min'),
+                new Interval(0.033333333333, '30 min'),
+                new Interval(0.04166666667, '1 hour')
+            ],
+            day: [
+                new Interval(0.033333333333, '30 min'),
+                new Interval(0.04166666667, '1 hour')
+            ],
+            week: [
+                new Interval(0.04166666667, '1 hour'),
+                new Interval(0.5, '12 hours'),
+                new Interval(1, '1 day')
+            ],
+            month: [
+                new Interval(0.04166666667, '1 hour'),
+                new Interval(0.5, '12 hours'),
+                new Interval(1, '1 day')
+            ],
+            year: [new Interval(1, '1 day'), new Interval(7, '1 week')],
+            all: [new Interval(30, '30 days'), new Interval(365, '1 year')]
+        }
+        const newOptions = options[startTimeString] || []
+        setIntervalOptions(newOptions)
+        if (
+            newOptions.length &&
+            !newOptions.some(opt => opt.value === interval)
+        ) {
+            const newInterval = newOptions[newOptions.length - 1].value
+            setInterval(newInterval)
+            return
+        }
 
-  useEffect(() => {
-    const fetchData = async () => {
-      await setUserData("IBM", 0.017, 15000, 15001, setUserDataIBM, [
-        "rgb(242, 139, 130)",
-      ]);
-      await setUserData("AMZN", 0.1, 16200, 16210, setUserDataAMZN, [
-        "rgb(129, 201, 149)",
-      ]);
-      await setUserData("TSLA", 0.02, 16200, 16210, setUserDataTSLA, [
-        "rgb(2, 163, 212)",
-      ]);
-      await setUserData("APPL", 0.02, 16200, 16210, setUserDataAPPL, [
-        "rgb(245, 185, 66)",
-      ]);
-      await setUserData("GOGL", 0.02, 16200, 16210, setUserDataGOOG, [
-        "rgb(183, 40, 235)",
-      ]);
-      await setUserData("MSFT", 0.5, 16100, 16220, setUserDataMSFT, [
-        "rgb(150, 237, 9)",
-      ]);
-      setCandleData(await getUserCandleData("IBM", 16000, 16000.05));
-    };
+        const sendMessage = () => {
+            const currentDate = new Date()
+            switch (startTimeString) {
+                case 'hour':
+                    currentDate.setHours(currentDate.getHours() - 1)
+                    break
+                case 'hours':
+                    currentDate.setHours(currentDate.getHours() - 6)
+                    break
+                case 'day':
+                    currentDate.setDate(currentDate.getDate() - 1)
+                    break
+                case 'week':
+                    currentDate.setDate(currentDate.getDate() - 7)
+                    break
+                case 'month':
+                    currentDate.setMonth(currentDate.getMonth() - 1)
+                    break
+                case 'year':
+                    currentDate.setFullYear(currentDate.getFullYear() - 1)
+                    break
+                case 'all':
+                    currentDate.setFullYear(currentDate.getFullYear() - 100)
+                    break
+            }
+            let startTime = convertToDays(currentDate)
+            startTime = Math.max(startTime, 0)
 
-    fetchData();
-  }, []);
+            const endDay = convertToDays(new Date())
+            if ((endDay - startTime) / interval > 1000) {
+                setInterval(intervalOptions[intervalOptions.length - 1].value)
+            }
+            const message = candleSelected
+                ? `${ticker}-${interval}-${startTime}-${endDay}-candle`
+                : `${ticker}-${interval}-${startTime}-${endDay}`
 
-  return (
-    <div>
-      <select>
-        {stocknames.map((element, index) => (
-          <option key={index}>{element}</option>
-        ))}
-      </select>
-      <CandleStickChart dataset={candleData} />
-      {userDatas.map((element, index) => (
-        <div
-          key={index}
-          style={{ width: 1200, backgroundColor: "#FFFFFF", margin: "35px" }}
-        >
-          <LineChart chartData={element} />
+            socket.send(JSON.stringify(message))
+        }
+
+        if (socket.readyState === WebSocket.OPEN) {
+            sendMessage()
+        } else {
+            socket.onopen = sendMessage
+        }
+
+        socket.onmessage = event => {
+            console.log('Received data:', event.data)
+            const newData = JSON.parse(event.data) as
+                | LineDataItem[]
+                | CandleGraphItem[]
+            if (candleSelected) {
+                applyCandleData(newData as CandleGraphItem[])
+            } else {
+                applyLineData(ticker, newData as LineDataItem[])
+            }
+        }
+    }, [interval, startTimeString, candleSelected, ticker])
+
+    const applyLineData = useCallback(
+        (ticker: string, data: LineDataItem[]) => {
+            const labels = data.map(item => item.Date)
+            if (labels.length != 0) {
+                setInvalidData(false)
+                const values = data.map(item => item.Value)
+                setStockPrice(data[data.length - 1].Value)
+                setUserData({
+                    labels,
+                    datasets: [
+                        {
+                            label: `Stock Price for ${ticker}`,
+                            values,
+                            backgroundColor: 'rgb(242, 139, 130)',
+                            borderColor: 'rgb(242, 139, 130)'
+                        }
+                    ]
+                })
+            } else {
+                setInvalidData(true)
+            }
+        },
+        []
+    )
+
+    const applyCandleData = useCallback((data: CandleGraphItem[]) => {
+        if (!Array.isArray(data) || !data.length) {
+            setInvalidData(true)
+            console.error('Invalid candle data received:', data)
+            return
+        }
+        setInvalidData(false)
+        console.log('Candle data:', data)
+        setStockPrice(data[data.length - 1].Close)
+        setCandleData(data)
+    }, [])
+
+    const startTimeOptions = [
+        'hour',
+        'hours',
+        'day',
+        'week',
+        'month',
+        'year',
+        'all'
+    ].map(option => (
+        <option
+            key={option}
+            value={option}
+        >{`${option[0].toUpperCase()}${option.slice(1)}`}</option>
+    ))
+
+    return (
+        <div>
+            <div className="select-group">
+                <div className="select-item">
+                    <p className="select-label">Stock:</p>
+                    <select
+                        id="stock-select"
+                        value={ticker}
+                        onChange={e => setTicker(e.target.value)}
+                    >
+                        {stockNames.map((name, index) => (
+                            <option key={index} value={name}>
+                                {name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="select-item">
+                    <p className="select-label">Start Time:</p>
+                    <select
+                        id="start-time-select"
+                        value={startTimeString}
+                        onChange={e => setStartDay(e.target.value)}
+                    >
+                        {startTimeOptions}
+                    </select>
+                </div>
+
+                <div className="select-item">
+                    <p className="select-label">Interval:</p>
+                    <select
+                        id="interval-select"
+                        value={interval}
+                        onChange={e => setInterval(parseFloat(e.target.value))}
+                    >
+                        {intervalOptions.map((opt, index) => (
+                            <option key={index} value={opt.value}>
+                                {opt.element}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div className="select-item">
+                    <div
+                        style={{
+                            marginTop: 'auto',
+                            marginBottom: '10px'
+                        }}
+                    >
+                        <BuyButton
+                            onClick={() => {
+                                setIsBuy(true)
+                                openPopup()
+                            }}
+                            size="large"
+                        >
+                            Buy
+                        </BuyButton>
+                    </div>
+                </div>
+                <div className="select-item">
+                    <div
+                        style={{
+                            marginTop: 'auto',
+                            marginBottom: '10px'
+                        }}
+                    >
+                        <SellButton
+                            onClick={() => {
+                                setIsBuy(false)
+                                openPopup()
+                            }}
+                            size="large"
+                        >
+                            Sell
+                        </SellButton>
+                    </div>
+                </div>
+                <div className="select-item-last">
+                    <p className="select-label">
+                        Balance: {userBalance.toFixed(2)}
+                    </p>
+                </div>
+            </div>
+            <div>
+                <Popup
+                    isBuy={isBuy}
+                    isOpen={popupOpen}
+                    onClose={closePopup}
+                    onSubmit={handleInvest}
+                    stockPrice={stockPrice}
+                    userBalance={userBalance}
+                />
+            </div>
+            <ToggleButtonNotEmpty
+                candleSelected={candleSelected}
+                setCandleSelected={setCandleSelected}
+            />
+            <h2>Stock owned: {stockAmount}</h2>
+            {invalidData ? (
+                <div>
+                    <h1>Invalid Data</h1>
+                </div>
+            ) : (
+                <div>
+                    {candleSelected ? (
+                        <CandleStickChart dataset={candleData} />
+                    ) : (
+                        <div
+                            style={{
+                                width: 1200,
+                                backgroundColor: '#FFFFFF',
+                                margin: '35px'
+                            }}
+                        >
+                            <LineChart chartData={chartData.datasets} />
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
-      ))}
-    </div>
-  );
+    )
 }
 
-export default Graphs;
+export default Graphs
