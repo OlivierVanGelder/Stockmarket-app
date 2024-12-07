@@ -22,18 +22,15 @@ jobs:
                   sleep 20  # Increase the wait time to allow the backend to initialize
                   tail -f backend.log  # Show logs to check for any startup issues
 
-            - name: Check if Backend is running
+            - name: Check if Backend is accessible
               run: |
-                  curl -v http://localhost:6969 || echo "Backend not accessible"
-                  # Or use https if needed:
-                  # curl -v https://localhost:42069
+                  # Use curl to verify if Swagger UI is accessible
+                  curl --insecure https://localhost:42069/swagger/index.html || echo "Backend is not accessible"
 
             - name: Wait for Backend to be ready
               run: |
-                  # Wait for the backend to be up and ready, increase the timeout and check with the correct port
-                  npx wait-on http://localhost:6969 --timeout 300000 --interval 5000
-                  # Or use https if needed:
-                  # npx wait-on https://localhost:42069 --timeout 300000 --interval 5000
+                  # Wait for the Swagger UI to be up and accessible on the correct port
+                  npx wait-on --timeout 300000 --interval 5000 https://localhost:42069/swagger/index.html
 
             - name: Start Frontend Server
               run: |
@@ -42,7 +39,7 @@ jobs:
 
             - name: Wait for Frontend to be ready
               run: |
-                  # Wait for the frontend to be up
+                  # Wait for the frontend server to be up and running on port 3000
                   npx wait-on http://localhost:3000 --timeout 300000 --interval 5000
 
             - name: Run Cypress tests
