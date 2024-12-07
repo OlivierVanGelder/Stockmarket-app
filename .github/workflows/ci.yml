@@ -17,14 +17,15 @@ jobs:
               run: pnpm install
 
             - name: Build backend project
-              working-directory: ./Backend-Example
-              run: dotnet build --project ./Presentation/Presentation.csproj
+                working-directory: ./Backend-Example
+                run: dotnet build ./Presentation/Presentation.csproj
 
             - name: Start backend server
               working-directory: ./Backend-Example
               run: |
-                  dotnet run --project ./Presentation/Presentation.csproj &
-                  npx wait-on http://localhost:4000 # Adjust port to match your backend
+                dotnet run --project ./Presentation/Presentation.csproj &
+                npx wait-on http://localhost:4000
+
 
             - name: Start frontend server
               working-directory: ./react-app
