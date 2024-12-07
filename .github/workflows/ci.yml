@@ -1,9 +1,12 @@
 name: End-to-end tests
-on: [push]
+on: [action]
 jobs:
     cypress-run:
         runs-on: ubuntu-22.04
         steps:
+            - name: Install dependencies
+              run: |
+                  npm install -g pnpm
             - name: Checkout
               uses: actions/checkout@v3
               #run cypress tests
