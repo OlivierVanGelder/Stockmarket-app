@@ -37,12 +37,20 @@ jobs:
             - name: Start Frontend Server
               run: |
                   cd ./react-app
-                  pnpm start &
-
-            - name: Wait for Frontend to be ready
-              run: |
-                  # Wait for the frontend to be up and running on port 3000
-                  npx wait-on http://localhost:3000 --timeout 300000 --interval 5000
+                  nohup pnpm start &> frontend.log &
+                  # Wait for the frontend to be fully initialized by checking if it's accessible
+                  timeout=300
+                  end=$((SECONDS+timeout))
+                  while [ $SECONDS -lt $end ]; do
+                    # Check if the frontend is available at http://localhost:3000
+                    curl --insecure http://localhost:3000 && break
+                    echo "Waiting for frontend to be ready..."
+                    sleep 5
+                  done
+                  if [ $SECONDS -ge $end ]; then
+                    echo "Frontend did not start in time."
+                    exit 1
+                  fi
 
             - name: Run Cypress tests
               run: pnpm npx cypress run
