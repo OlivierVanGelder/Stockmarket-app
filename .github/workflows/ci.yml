@@ -9,21 +9,29 @@ jobs:
         steps:
             - uses: actions/checkout@v3
 
-            # Installeer pnpm
             - name: Install pnpm
-              run: |
-                  npm install -g pnpm
+              run: npm install -g pnpm
 
-            # Installeer de dependencies
-            - name: Install dependencies
+            - name: Install frontend dependencies
+              working-directory: ./react-app
               run: pnpm install
 
-            # Start de server en wacht
-            - name: Start server and wait
+            - name: Build backend project
+              working-directory: ./Backend-Example
+              run: dotnet build --project ./Presentation/Presentation.csproj
+
+            - name: Start backend server
+              working-directory: ./Backend-Example
+              run: |
+                  dotnet run --project ./Presentation/Presentation.csproj &
+                  npx wait-on http://localhost:4000 # Adjust port to match your backend
+
+            - name: Start frontend server
+              working-directory: ./react-app
               run: |
                   pnpm start &
                   npx wait-on http://localhost:3000
 
-            # Voer Cypress tests uit
             - name: Run Cypress tests
+              working-directory: ./react-app
               run: pnpm npx cypress run
