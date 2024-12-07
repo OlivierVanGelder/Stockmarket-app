@@ -37,7 +37,7 @@ jobs:
             - name: Start Frontend Server
               run: |
                   cd ./react-app
-                  nohup pnpm start &> frontend.log &
+                  pnpm start &> frontend.log &
                   # Wait for the frontend to be fully initialized by checking if it's accessible
                   timeout=300
                   end=$((SECONDS+timeout))
