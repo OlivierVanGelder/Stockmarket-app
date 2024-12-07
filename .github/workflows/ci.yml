@@ -5,39 +5,26 @@ on: [push]
 jobs:
     cypress-run:
         runs-on: ubuntu-latest
-
         steps:
-            # Checkout the repository
             - uses: actions/checkout@v3
 
-            # Install pnpm
-            - name: Install pnpm
-              run: npm install -g pnpm
-
-            # Install dependencies for the frontend
-            - name: Install frontend dependencies
-              working-directory: ./react-app
+            - name: Install dependencies
               run: pnpm install
 
-            # Install dependencies for the backend
-            - name: Install backend dependencies
-              working-directory: ./Backend-Example
-              run: dotnet restore ./Presentation/Presentation.csproj
-
-            # Start the backend server and wait for it to be ready
-            - name: Start backend server
-              working-directory: ./Backend-Example
+            - name: Start Backend Server
               run: |
-                  dotnet run --project ./Presentation/Presentation.csproj &
-                  npx wait-on http://localhost:5000- --timeout 30000 --interval 5000
+                  # Start the backend (if running as a .NET app)
+                  dotnet run --project ./Backend-Example/Presentation/Presentation.csproj &
 
-            # Start the frontend server and wait for it to be ready
-            - name: Start frontend server
-              working-directory: ./react-app
+            - name: Wait for Backend to be ready
               run: |
+                  npx wait-on http://localhost:6969 --timeout 60000 --interval 5000  # Make sure the correct port is here
+
+            - name: Start Frontend Server
+              run: |
+                  cd ./react-app
                   pnpm start &
-                  npx wait-on http://localhost:3000 --timeout 30000 --interval 5000
 
-            # Run Cypress tests
             - name: Run Cypress tests
-              run: npx cypress run
+              run: |
+                  pnpm npx cypress run
