@@ -1,6 +1,21 @@
 name: End-to-end tests
 on: [push]
 jobs:
+    test:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Install dependencies
+              run: npm install
+
+            - name: Backend-Example
+              run: npm start &
+              env:
+                  NODE_ENV: test
+
+            - name: Run Cypress tests
+              run: npx cypress run
     cypress-run:
         runs-on: ubuntu-22.04
         steps:

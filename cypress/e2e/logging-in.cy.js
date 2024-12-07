@@ -1,4 +1,4 @@
-describe('Login Form', () => {
+describe('Loggin in', () => {
   it('fills in the username and password, then submits the form', () => {
     cy.visit('/login'); 
 
