@@ -5,8 +5,13 @@ on: [push]
 jobs:
     cypress-run:
         runs-on: ubuntu-latest
+
         steps:
-            - uses: actions/checkout@v3
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Install pnpm
+              run: npm install -g pnpm
 
             - name: Install dependencies
               run: pnpm install
@@ -18,13 +23,18 @@ jobs:
 
             - name: Wait for Backend to be ready
               run: |
-                  npx wait-on http://localhost:6969 --timeout 60000 --interval 5000  # Make sure the correct port is here
+                  # Wait for the backend to be up and ready (adjust port if needed)
+                  npx wait-on http://localhost:6969 --timeout 120000 --interval 5000  # Adjust timeout and port if necessary
 
             - name: Start Frontend Server
               run: |
                   cd ./react-app
                   pnpm start &
 
-            - name: Run Cypress tests
+            - name: Wait for Frontend to be ready
               run: |
-                  pnpm npx cypress run
+                  # Wait for the frontend to be up (adjust port if needed)
+                  npx wait-on http://localhost:3000 --timeout 60000 --interval 5000  # Adjust timeout and port if necessary
+
+            - name: Run Cypress tests
+              run: pnpm npx cypress run
