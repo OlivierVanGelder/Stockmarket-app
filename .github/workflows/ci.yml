@@ -24,7 +24,7 @@ jobs:
               working-directory: ./Backend-Example
               run: |
                   dotnet run --project ./Presentation/Presentation.csproj &
-                  npx wait-on http://localhost:4000
+                  npx wait-on http://localhost:42069
 
             - name: Start frontend server
               working-directory: ./react-app
