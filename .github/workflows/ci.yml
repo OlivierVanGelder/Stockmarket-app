@@ -19,7 +19,7 @@ jobs:
             - name: Start Backend Server
               run: |
                   nohup dotnet run --project ./Backend-Example/Presentation/Presentation.csproj &> backend.log &
-                  sleep 10  # Give it some time to initialize before moving on
+                  sleep 30  # Give it some time to initialize before moving on
                   tail -f backend.log  # Log output for debugging
 
             - name: Wait for Backend to be ready
