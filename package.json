@@ -1,4 +1,8 @@
 {
+	"scripts": {
+  	"start": "react-scripts start"
+	},
+
 	"include": ["./src", "cypress.d.ts"],
 
 	"devDependencies": {

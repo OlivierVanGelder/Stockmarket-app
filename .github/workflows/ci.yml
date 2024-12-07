@@ -3,19 +3,19 @@ name: End-to-end tests
 on: [push]
 
 jobs:
-    test:
+    cypress-run:
         runs-on: ubuntu-latest
 
         steps:
             - uses: actions/checkout@v3
 
             - name: Install dependencies
-              run: npm install
+              run: pnpm install
 
             - name: Start server and wait
               run: |
-                  npm start &
-                  npx wait-on http://localhost:3000
+                  pnpm start &
+                  pnpm npx wait-on http://localhost:3000
 
             - name: Run Cypress tests
-              run: npx cypress run
+              run: pnpm npx cypress run
