@@ -7,34 +7,37 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - name: Checkout code
-              uses: actions/checkout@v3
+            # Checkout the repository
+            - uses: actions/checkout@v3
 
+            # Install pnpm
             - name: Install pnpm
               run: npm install -g pnpm
 
-            - name: Install dependencies
+            # Install dependencies for the frontend
+            - name: Install frontend dependencies
+              working-directory: ./react-app
               run: pnpm install
 
-            - name: Start Backend Server
-              run: |
-                  # Start the backend (if running as a .NET app)
-                  dotnet run --project ./Backend-Example/Presentation/Presentation.csproj &
+            # Install dependencies for the backend
+            - name: Install backend dependencies
+              working-directory: ./Backend-Example
+              run: dotnet restore ./Presentation/Presentation.csproj
 
-            - name: Wait for Backend to be ready
+            # Start the backend server and wait for it to be ready
+            - name: Start backend server
+              working-directory: ./Backend-Example
               run: |
-                  # Wait for the backend to be up and ready (adjust port if needed)
-                  npx wait-on http://localhost:6969 --timeout 120000 --interval 5000  # Adjust timeout and port if necessary
+                  dotnet run --project ./Presentation/Presentation.csproj &
+                  npx wait-on http://localhost:6969- --timeout 60000 --interval 5000
 
-            - name: Start Frontend Server
+            # Start the frontend server and wait for it to be ready
+            - name: Start frontend server
+              working-directory: ./react-app
               run: |
-                  cd ./react-app
                   pnpm start &
+                  npx wait-on http://localhost:3000 --timeout 30000 --interval 5000
 
-            - name: Wait for Frontend to be ready
-              run: |
-                  # Wait for the frontend to be up (adjust port if needed)
-                  npx wait-on http://localhost:3000 --timeout 60000 --interval 5000  # Adjust timeout and port if necessary
-
+            # Run Cypress tests
             - name: Run Cypress tests
-              run: pnpm npx cypress run
+              run: npx cypress run
