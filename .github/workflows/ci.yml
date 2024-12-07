@@ -18,19 +18,21 @@ jobs:
 
             - name: Start Backend Server
               run: |
+                  # Start the backend in the background
                   nohup dotnet run --project ./Backend-Example/Presentation/Presentation.csproj &> backend.log &
-                  sleep 20  # Increase the wait time to allow the backend to initialize
-                  tail -f backend.log  # Show logs to check for any startup issues
-
-            - name: Check if Backend is accessible
-              run: |
-                  # Use curl to verify if Swagger UI is accessible
-                  curl --insecure https://localhost:42069/swagger/index.html || echo "Backend is not accessible"
-
-            - name: Wait for Backend to be ready
-              run: |
-                  # Wait for the Swagger UI to be up and accessible on the correct port
-                  npx wait-on --timeout 300000 --interval 5000 https://localhost:42069/swagger/index.html
+                  # Wait for the backend to be fully initialized by checking if the Swagger UI is accessible
+                  timeout=300
+                  end=$((SECONDS+timeout))
+                  while [ $SECONDS -lt $end ]; do
+                    # Check if the Swagger UI is accessible
+                    curl --insecure https://localhost:42069/swagger/index.html && break
+                    echo "Waiting for backend to be ready..."
+                    sleep 5
+                  done
+                  if [ $SECONDS -ge $end ]; then
+                    echo "Backend did not start in time."
+                    exit 1
+                  fi
 
             - name: Start Frontend Server
               run: |
@@ -39,7 +41,7 @@ jobs:
 
             - name: Wait for Frontend to be ready
               run: |
-                  # Wait for the frontend server to be up and running on port 3000
+                  # Wait for the frontend to be up and running on port 3000
                   npx wait-on http://localhost:3000 --timeout 300000 --interval 5000
 
             - name: Run Cypress tests
