@@ -1,29 +1,21 @@
 name: End-to-end tests
+
 on: [push]
+
 jobs:
     test:
         runs-on: ubuntu-latest
+
         steps:
             - uses: actions/checkout@v3
 
             - name: Install dependencies
               run: npm install
 
-            - name: Backend-Example
-              run: npm start &
-              env:
-                  NODE_ENV: test
+            - name: Start server and wait
+              run: |
+                  npm start &
+                  npx wait-on http://localhost:3000
 
             - name: Run Cypress tests
               run: npx cypress run
-    cypress-run:
-        runs-on: ubuntu-22.04
-        steps:
-            - name: Install dependencies
-              run: |
-                  npm install -g pnpm
-            - name: Checkout
-              uses: actions/checkout@v3
-              #run cypress tests
-            - name: Cypress run
-              uses: cypress-io/github-action@v5
