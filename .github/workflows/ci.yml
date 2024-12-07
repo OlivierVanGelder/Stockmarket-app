@@ -9,13 +9,21 @@ jobs:
         steps:
             - uses: actions/checkout@v3
 
+            # Installeer pnpm
+            - name: Install pnpm
+              run: |
+                  npm install -g pnpm
+
+            # Installeer de dependencies
             - name: Install dependencies
               run: pnpm install
 
+            # Start de server en wacht
             - name: Start server and wait
               run: |
                   pnpm start &
-                  pnpm npx wait-on http://localhost:3000
+                  npx wait-on http://localhost:3000
 
+            # Voer Cypress tests uit
             - name: Run Cypress tests
               run: pnpm npx cypress run
