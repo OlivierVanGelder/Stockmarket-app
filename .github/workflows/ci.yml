@@ -29,7 +29,7 @@ jobs:
               working-directory: ./Backend-Example
               run: |
                   dotnet run --project ./Presentation/Presentation.csproj &
-                  npx wait-on http://localhost:6969 --timeout 30000 --interval 5000
+                  npx wait-on http://localhost:5000- --timeout 30000 --interval 5000
 
             # Start the frontend server and wait for it to be ready
             - name: Start frontend server
