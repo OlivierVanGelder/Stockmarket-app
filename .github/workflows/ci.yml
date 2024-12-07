@@ -7,31 +7,37 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
+            # Checkout the repository
             - uses: actions/checkout@v3
 
+            # Install pnpm
             - name: Install pnpm
               run: npm install -g pnpm
 
+            # Install dependencies for the frontend
             - name: Install frontend dependencies
               working-directory: ./react-app
               run: pnpm install
 
-            - name: Build backend project
+            # Install dependencies for the backend
+            - name: Install backend dependencies
               working-directory: ./Backend-Example
-              run: dotnet build ./Presentation/Presentation.csproj
+              run: dotnet restore ./Presentation/Presentation.csproj
 
+            # Start the backend server and wait for it to be ready
             - name: Start backend server
               working-directory: ./Backend-Example
               run: |
                   dotnet run --project ./Presentation/Presentation.csproj &
-                  npx wait-on http://localhost:42069
+                  npx wait-on http://localhost:6969
 
+            # Start the frontend server and wait for it to be ready
             - name: Start frontend server
               working-directory: ./react-app
               run: |
                   pnpm start &
                   npx wait-on http://localhost:3000
 
+            # Run Cypress tests
             - name: Run Cypress tests
-              working-directory: ./react-app
-              run: pnpm npx cypress run
+              run: npx cypress run
