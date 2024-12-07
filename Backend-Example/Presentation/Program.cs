@@ -23,6 +23,8 @@ builder.Services.AddDbContext<Backend_Example.Data.BDaccess.DbStockEngine>(optio
     options.UseSqlServer(connectionString)
 );
 
+builder.WebHost.UseUrls("https://localhost:6969", "http://localhost:6969");
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(
