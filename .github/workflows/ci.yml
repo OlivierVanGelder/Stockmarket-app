@@ -50,7 +50,7 @@ jobs:
                   timeout=600  # Increased timeout (10 minutes)
                   end=$((SECONDS+timeout))
 
-                  # Check the frontend startup by repeatedly trying to reach localhost:3000
+                  # Check the frontend startup by repeatedly trying to reach http://localhost:3000
                   while [ $SECONDS -lt $end ]; do
                     curl --insecure http://localhost:3000 && break
                     echo "Waiting for frontend to be ready..."
