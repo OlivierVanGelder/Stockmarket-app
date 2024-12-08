@@ -20,18 +20,19 @@ jobs:
               run: |
                   # Start the backend in the background
                   nohup dotnet run --project ./Backend-Example/Presentation/Presentation.csproj &> backend.log &
-                  # Wait for the backend to be fully initialized by checking if the Swagger UI is accessible
+
+                  # Wait for the backend to be fully initialized
                   timeout=300
                   end=$((SECONDS+timeout))
                   while [ $SECONDS -lt $end ]; do
-                    # Check if the Swagger UI is accessible
                     curl --insecure https://localhost:42069/swagger/index.html && break
                     echo "Waiting for backend to be ready..."
                     sleep 5
                   done
+
                   if [ $SECONDS -ge $end ]; then
                     echo "Backend did not start in time."
-                    cat backend.log  # Log backend issues
+                    cat backend.log  # Display backend logs for debugging
                     exit 1
                   fi
 
@@ -39,38 +40,27 @@ jobs:
               run: |
                   # Change to the frontend directory
                   cd ./react-app
-                  echo "Changed directory to $(pwd)"
-
-                  # Ensure pnpm is available in the frontend directory
-                  pnpm --version
 
                   # Install frontend dependencies
                   pnpm install
 
-                  # Start the frontend in the background and log to frontend.log
+                  # Start the frontend in the background
                   nohup pnpm start &> frontend.log &
 
-                  # Wait for the frontend to be fully initialized by checking if it's accessible
-                  timeout=600  # Increased timeout (10 minutes)
+                  # Wait for the frontend to be fully initialized
+                  timeout=600
                   end=$((SECONDS+timeout))
-
-                  # Check the frontend startup by repeatedly trying to reach http://localhost:3000
                   while [ $SECONDS -lt $end ]; do
-                    curl --insecure http://localhost:3000 && break
+                    curl http://localhost:3000 && break
                     echo "Waiting for frontend to be ready..."
                     sleep 5
                   done
 
                   if [ $SECONDS -ge $end ]; then
                     echo "Frontend did not start in time."
-                    cat frontend.log  # Show logs to help debug
+                    cat frontend.log  # Display frontend logs for debugging
                     exit 1
                   fi
 
             - name: Run Cypress tests
               run: pnpm npx cypress run
-
-            # Additional step to always output logs after the job completes
-            - name: Output Frontend Logs
-              if: always() # Ensure logs are printed even if the job fails
-              run: cat react-app/frontend.log

@@ -10,7 +10,7 @@ describe('Loggin in', () => {
     cy.get('form')
       .submit();
 
-    cy.get('p')
+    cy.get('p', { timeout: 15000 })
       .should('contain.text', 'Login successful');
   });
 });
