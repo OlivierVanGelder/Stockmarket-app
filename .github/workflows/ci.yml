@@ -1,4 +1,4 @@
-name: End-to-End Tests
+name: End-to-end tests
 
 on: [push]
 
@@ -7,57 +7,61 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v3
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Install pnpm
+              run: npm install -g pnpm
 
             - name: Install dependencies
               run: pnpm install
 
             - name: Start Backend Server
               run: |
-                  cd ./Backend-Example
-                  dotnet build --project ./Presentation/Presentation.csproj
-                  nohup dotnet run --project ./Presentation/Presentation.csproj > backend.log 2>&1 &
-
-            - name: Wait for Backend to be ready
-              run: |
-                  timeout=600  # Timeout set to 10 minutes
+                  # Start the backend in the background
+                  nohup dotnet run --project ./Backend-Example/Presentation/Presentation.csproj &> backend.log &
+                  # Wait for the backend to be fully initialized by checking if the Swagger UI is accessible
+                  timeout=300
                   end=$((SECONDS+timeout))
                   while [ $SECONDS -lt $end ]; do
-                    curl --insecure http://localhost:6969 && break
+                    # Check if the Swagger UI is accessible
+                    curl --insecure https://localhost:42069/swagger/index.html && break
                     echo "Waiting for backend to be ready..."
                     sleep 5
                   done
                   if [ $SECONDS -ge $end ]; then
                     echo "Backend did not start in time."
-                    cat backend.log
                     exit 1
                   fi
 
             - name: Start Frontend Server
               run: |
-                  # Navigate to the frontend directory
+                  # Change to the frontend directory
                   cd ./react-app
                   echo "Changed directory to $(pwd)"
 
-                  # Install dependencies (if necessary) and start the frontend
-                  pnpm install
-                  nohup pnpm start > frontend.log 2>&1 &
+                  # Ensure pnpm is available in the frontend directory
+                  pnpm --version
 
-                  # Wait for the frontend to be ready
-                  timeout=600  # Timeout set to 10 minutes
+                  # Start the frontend in the background and log to frontend.log
+                  nohup pnpm start &> frontend.log &
+
+                  # Wait for the frontend to be fully initialized by checking if it's accessible
+                  timeout=600  # Increased timeout (10 minutes)
                   end=$((SECONDS+timeout))
+
+                  # Check the frontend startup by repeatedly trying to reach http://localhost:3000
                   while [ $SECONDS -lt $end ]; do
                     curl --insecure http://localhost:3000 && break
                     echo "Waiting for frontend to be ready..."
                     sleep 5
                   done
+
                   if [ $SECONDS -ge $end ]; then
                     echo "Frontend did not start in time."
-                    cat frontend.log  # Show frontend logs for debugging
+                    cat frontend.log  # Show the logs to help debug
                     exit 1
                   fi
 
             - name: Run Cypress tests
-              run: |
-                  # Cypress tests are executed once both the backend and frontend are ready
-                  npx cypress run
+              run: pnpm npx cypress run
