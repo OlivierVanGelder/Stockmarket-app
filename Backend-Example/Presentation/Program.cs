@@ -13,25 +13,23 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Set up services based on environment
 var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
 
-if (environment == "Test")
+if (builder.Environment.IsDevelopment() || environment == "Test")
 {
-    // Use SQLite In-Memory Database for Test environment
+    // Use SQLite In-Memory Database for testing or development
     builder.Services.AddDbContext<DbStockEngine>(options =>
         options.UseSqlite("DataSource=:memory:")
-    ); // In-memory database
+    );
 }
 else
 {
-    // Use SQL Server for non-Test environments
+    // Use the real SQL Server database for other environments
     builder.Services.AddDbContext<DbStockEngine>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
-    ); // Connection string from appsettings
+    );
 }
 
-// Add other services and configurations
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -137,7 +135,7 @@ if (builder.Environment.IsDevelopment() || environment == "Test")
     using (var scope = app.Services.CreateScope())
     {
         var services = scope.ServiceProvider;
-        SeedData.Initialize(services);
+        SeedData.Initialize(services); // Call SeedData to populate the in-memory database
     }
 }
 
