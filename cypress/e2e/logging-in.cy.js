@@ -1,7 +1,7 @@
 describe('Loggin in', () => {
   beforeEach(() => {
     // Mock the API response for login
-    cy.intercept('POST', '/api/login', {
+    cy.intercept('POST', `/users/${username}/login?password=${password}`, {
       statusCode: 200,
       body: { message: 'Login successful' },
     }).as('loginRequest');
