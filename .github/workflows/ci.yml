@@ -16,6 +16,9 @@ jobs:
             - name: Install dependencies
               run: pnpm install
 
+            - name: Set environment variable for testing (ASPNETCORE_ENVIRONMENT)
+              run: echo "ASPNETCORE_ENVIRONMENT=Test" >> $GITHUB_ENV
+
             - name: Start Backend Server
               run: |
                   # Start the backend in the background

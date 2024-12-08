@@ -1,6 +1,6 @@
 using System.Text;
-using System.Text.Json;
 using Backend_Example.Controllers;
+using Backend_Example.Data.BDaccess;
 using Backend_Example.Logic.Stocks;
 using DAL.BDaccess;
 using DAL.Tables;
@@ -13,15 +13,29 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Set up services based on environment
+var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+
+if (environment == "Test")
+{
+    // Use SQLite In-Memory Database for Test environment
+    builder.Services.AddDbContext<DbStockEngine>(options =>
+        options.UseSqlite("DataSource=:memory:")
+    ); // In-memory database
+}
+else
+{
+    // Use SQL Server for non-Test environments
+    builder.Services.AddDbContext<DbStockEngine>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+    ); // Connection string from appsettings
+}
+
+// Add other services and configurations
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
-
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<Backend_Example.Data.BDaccess.DbStockEngine>(options =>
-    options.UseSqlServer(connectionString)
-);
 
 builder.Services.AddCors(options =>
 {
@@ -30,7 +44,7 @@ builder.Services.AddCors(options =>
         builder =>
         {
             builder
-                .WithOrigins("http://localhost:3000")
+                .WithOrigins("http://localhost:3000") // Frontend URL
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials();
@@ -40,7 +54,7 @@ builder.Services.AddCors(options =>
 
 builder
     .Services.AddIdentity<User, IdentityRole>()
-    .AddEntityFrameworkStores<Backend_Example.Data.BDaccess.DbStockEngine>()
+    .AddEntityFrameworkStores<DbStockEngine>()
     .AddDefaultTokenProviders();
 
 builder.Services.AddAuthorization();
@@ -63,23 +77,18 @@ builder
                     var responseMessage = new { message = "Authentication failed" };
                     return context.Response.WriteAsJsonAsync(responseMessage);
                 }
-
                 return Task.CompletedTask;
             },
-
             OnChallenge = context =>
             {
                 if (!context.Response.HasStarted)
                 {
                     context.HandleResponse();
-
                     context.Response.StatusCode = 401;
                     context.Response.ContentType = "application/json";
-
                     var responseMessage = new { message = "Authentication required" };
                     return context.Response.WriteAsJsonAsync(responseMessage);
                 }
-
                 return Task.CompletedTask;
             },
         };
@@ -122,6 +131,17 @@ builder.Services.AddWebSockets(options => { });
 
 var app = builder.Build();
 
+// Seed the database if in test mode (for in-memory testing)
+if (builder.Environment.IsDevelopment() || environment == "Test")
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        SeedData.Initialize(services);
+    }
+}
+
+// Development-specific setup
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
