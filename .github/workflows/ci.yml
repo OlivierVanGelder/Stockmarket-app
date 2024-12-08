@@ -31,6 +31,7 @@ jobs:
                   done
                   if [ $SECONDS -ge $end ]; then
                     echo "Backend did not start in time."
+                    cat backend.log  # Log backend issues
                     exit 1
                   fi
 
@@ -42,6 +43,9 @@ jobs:
 
                   # Ensure pnpm is available in the frontend directory
                   pnpm --version
+
+                  # Install frontend dependencies
+                  pnpm install
 
                   # Start the frontend in the background and log to frontend.log
                   nohup pnpm start &> frontend.log &
@@ -59,9 +63,14 @@ jobs:
 
                   if [ $SECONDS -ge $end ]; then
                     echo "Frontend did not start in time."
-                    cat frontend.log  # Show the logs to help debug
+                    cat frontend.log  # Show logs to help debug
                     exit 1
                   fi
 
             - name: Run Cypress tests
               run: pnpm npx cypress run
+
+            # Additional step to always output logs after the job completes
+            - name: Output Frontend Logs
+              if: always() # Ensure logs are printed even if the job fails
+              run: cat react-app/frontend.log
