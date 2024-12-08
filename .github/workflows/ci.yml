@@ -36,10 +36,6 @@ jobs:
 
             - name: Start Frontend Server
               run: |
-                  # List files in the current directory for debugging
-                  echo "Listing current directory contents"
-                  ls -la
-
                   # Change to the frontend directory
                   cd ./react-app
                   echo "Changed directory to $(pwd)"
@@ -47,20 +43,23 @@ jobs:
                   # Ensure pnpm is available in the frontend directory
                   pnpm --version
 
-                  # Start the frontend and run in the background
+                  # Start the frontend in the background and log to frontend.log
                   nohup pnpm start &> frontend.log &
 
                   # Wait for the frontend to be fully initialized by checking if it's accessible
-                  timeout=300
+                  timeout=600  # Increased timeout (10 minutes)
                   end=$((SECONDS+timeout))
+
+                  # Check the frontend startup by repeatedly trying to reach localhost:3000
                   while [ $SECONDS -lt $end ]; do
-                    # Check if the frontend is available at http://localhost:3000
                     curl --insecure http://localhost:3000 && break
                     echo "Waiting for frontend to be ready..."
                     sleep 5
                   done
+
                   if [ $SECONDS -ge $end ]; then
                     echo "Frontend did not start in time."
+                    cat frontend.log  # Show the logs to help debug
                     exit 1
                   fi
 
