@@ -17,7 +17,7 @@ jobs:
               run: pnpm install
 
             - name: Set environment variable for testing (ASPNETCORE_ENVIRONMENT)
-              run: echo "ASPNETCORE_ENVIRONMENT=Test" >> $GITHUB_ENV
+              run: echo "ASPNETCORE_ENVIRONMENT=CypressTest" >> $GITHUB_ENV
 
             - name: Start Backend Server
               run: |

@@ -1,4 +1,4 @@
-describe('Loggin in', () => {
+describe('Logging in', () => {
   it('successfully loads', () => {
     cy.visit('/');
   });

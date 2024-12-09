@@ -15,16 +15,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
 
-if (builder.Environment.IsDevelopment() || environment == "Test")
+if (environment == "CypressTest")
 {
-    // Use SQLite In-Memory Database for testing or development
     builder.Services.AddDbContext<DbStockEngine>(options =>
-        options.UseSqlite("DataSource=:memory:")
+        options.UseSqlServer(builder.Configuration.GetConnectionString("MockConnection"))
     );
 }
 else
 {
-    // Use the real SQL Server database for other environments
     builder.Services.AddDbContext<DbStockEngine>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
     );
@@ -129,17 +127,6 @@ builder.Services.AddWebSockets(options => { });
 
 var app = builder.Build();
 
-// Seed the database if in test mode (for in-memory testing)
-if (builder.Environment.IsDevelopment() || environment == "Test")
-{
-    using (var scope = app.Services.CreateScope())
-    {
-        var services = scope.ServiceProvider;
-        SeedData.Initialize(services); // Call SeedData to populate the in-memory database
-    }
-}
-
-// Development-specific setup
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -155,7 +142,6 @@ app.UseAuthorization();
 
 app.UseCors("AllowFrontend");
 
-// Enable WebSockets
 app.UseWebSockets();
 app.Stockcontroller(builder.Configuration);
 app.Usercontroller(builder.Configuration);
