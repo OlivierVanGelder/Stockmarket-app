@@ -21,8 +21,8 @@ jobs:
             - name: Install Dependencies
               run: pnpm install -r
 
-            - name: Set environment variable for testing (ASPNETCORE_ENVIRONMENT)
-              run: echo "ASPNETCORE_ENVIRONMENT=CypressTest" >> $GITHUB_ENV
+              env:
+                  ASPNETCORE_ENVIRONMEN: CypressTest
 
             - name: Start Backend Server
               run: |
