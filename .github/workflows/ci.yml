@@ -13,17 +13,16 @@ jobs:
             - name: Install pnpm
               run: npm install -g pnpm
 
-            - name: Install dependencies
-              run: |
-                  cd ./cypress
-                  pnpm install
+            - name: Install Cypress Dependencies
+              working-directory: ./cypress
+              run: pnpm install
 
             - name: Set environment variable for testing (ASPNETCORE_ENVIRONMENT)
               run: echo "ASPNETCORE_ENVIRONMENT=CypressTest" >> $GITHUB_ENV
 
             - name: Start Backend Server
+              working-directory: ..
               run: |
-                  cd ..
                   # Start the backend in the background
                   nohup dotnet run --project ./Backend-Example/Presentation/Presentation.csproj &> backend.log &
 
@@ -43,10 +42,8 @@ jobs:
                   fi
 
             - name: Start Frontend Server
+              working-directory: ./react-app
               run: |
-                  # Change to the frontend directory
-                  cd ./react-app
-
                   # Install frontend dependencies
                   pnpm install
 
@@ -68,7 +65,6 @@ jobs:
                     exit 1
                   fi
 
-            - name: Run Cypress tests
-              run: |
-                  cd ./cypress
-                  pnpm npx cypress run
+            - name: Run Cypress Tests
+              working-directory: ./cypress
+              run: pnpm npx cypress run
