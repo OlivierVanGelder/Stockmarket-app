@@ -17,8 +17,9 @@ var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
 
 if (environment == "CypressTest")
 {
+    // Using SQLite for testing purposes in the CI/CD pipeline
     builder.Services.AddDbContext<DbStockEngine>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("MockConnection"))
+        options.UseSqlite("Data Source=:memory:") // In-memory SQLite for tests
     );
 }
 else
@@ -126,6 +127,12 @@ builder.Services.AddCors(policyBuilder =>
 builder.Services.AddWebSockets(options => { });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<DbStockEngine>();
+    dbContext.Database.EnsureCreated(); // Ensures the database is created and migrations are applied
+}
 
 if (app.Environment.IsDevelopment())
 {

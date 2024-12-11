@@ -66,4 +66,6 @@ jobs:
                   fi
 
             - name: Run Cypress tests
-              run: pnpm npx cypress run
+              run: |
+                  cd ./cypress
+                  pnpm npx cypress run
