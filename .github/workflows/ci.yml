@@ -23,6 +23,7 @@ jobs:
 
             - name: Start Backend Server
               run: |
+                  cd ..
                   # Start the backend in the background
                   nohup dotnet run --project ./Backend-Example/Presentation/Presentation.csproj &> backend.log &
 
