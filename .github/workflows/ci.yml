@@ -10,23 +10,24 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v3
 
+            - name: Install .NET Core
+              uses: actions/setup-dotnet@v4
+              with:
+                  dotnet-version: 8.0.x
+
             - name: Install pnpm
               run: npm install -g pnpm
 
-            - name: Install Cypress Dependencies
-              working-directory: ./cypress
-              run: pnpm install
+            - name: Install Dependencies
+              run: pnpm install -r
 
             - name: Set environment variable for testing (ASPNETCORE_ENVIRONMENT)
               run: echo "ASPNETCORE_ENVIRONMENT=CypressTest" >> $GITHUB_ENV
 
             - name: Start Backend Server
               run: |
-                  # Restore .NET dependencies for the backend
-                  dotnet restore ./Backend-Example/Presentation/Presentation.csproj
-
                   # Start the backend in the background
-                  nohup dotnet run --project ./Backend-Example/Presentation/Presentation.csproj &> backend.log &
+                  nohup dotnet run --project ./Backend-Example/Presentation &
 
                   # Wait for the backend to be fully initialized
                   timeout=300
@@ -46,11 +47,8 @@ jobs:
             - name: Start Frontend Server
               working-directory: ./react-app
               run: |
-                  # Install frontend dependencies
-                  pnpm install
-
                   # Start the frontend in the background
-                  nohup pnpm start &> frontend.log &
+                  nohup pnpm start &
 
                   # Wait for the frontend to be fully initialized
                   timeout=600
