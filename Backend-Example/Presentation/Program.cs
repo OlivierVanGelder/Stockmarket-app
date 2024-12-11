@@ -13,9 +13,8 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-
-if (environment == "CypressTest")
+var environment = Environment.GetEnvironmentVariable("TESTING");
+if (environment == "true")
 {
     // Using SQLite for testing purposes in the CI/CD pipeline
     builder.Services.AddDbContext<DbStockEngine>(options =>
