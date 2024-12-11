@@ -23,7 +23,7 @@ jobs:
 
             - name: Start Backend Server
               env:
-                  ASPNETCORE_ENVIRONMEN: CypressTest
+                  ASPNETCORE_ENVIRONMENT: CypressTest
               run: |
                   # Start the backend in the background
                   nohup dotnet run --project ./Backend-Example/Presentation &
