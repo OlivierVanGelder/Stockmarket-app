@@ -1,7 +1,10 @@
 describe('Loggin in', () => {
 
   it('fills in the username and password, then submits the form', () => {
-    cy.visit('/login'); 
+    cy.visit('/');
+    cy.get('#root .App nav ul li')
+      .contains('Graphs')
+      .click();
 
     cy.get('input#username').type('test');
     cy.get('input#password').type('TestingLogin');
