@@ -1,0 +1,13 @@
+{
+	admin off
+	debug
+	auto_https off
+}
+
+http://api.localhost {
+	reverse_proxy localhost:6969
+}
+
+http://localhost {
+	reverse_proxy localhost:3000
+}

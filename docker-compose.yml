@@ -1,0 +1,52 @@
+networks:
+  internal:
+    internal: true
+  external:
+    driver: bridge
+
+volumes:
+  stockengine-sql-storage:
+
+services:
+  caddy:
+    image: caddy:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker.Caddyfile:/etc/caddy/Caddyfile
+    networks:
+      - external
+      - internal
+    depends_on:
+      - frontend
+      - backend
+  frontend:
+    build: ./react-app
+    networks:
+      - internal
+  backend:
+    build: ./Backend-Example
+    networks:
+      - internal
+    depends_on:
+      - database
+    environment:
+      ConnectionString: |
+        Server=database;
+        Database=stockengine;
+        User Id=sa;
+        Password=TheDatabasePasswordWeUseAndNoOneCanGuess12345;
+        Trusted_Connection=False;
+        TrustServerCertificate=True;
+        MultipleActiveResultSets=true;
+  database:
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    networks:
+      - internal
+    volumes:
+      - stockengine-sql-storage:/var/opt/mssql
+    environment:
+      ACCEPT_EULA: 1
+      MSSQL_SA_PASSWORD: "TheDatabasePasswordWeUseAndNoOneCanGuess12345"
+      MSSQL_PID: Developer
+      MSSQL_TELEMETRY_ENABLED: "FALSE"

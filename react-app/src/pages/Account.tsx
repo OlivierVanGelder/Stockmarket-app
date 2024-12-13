@@ -7,7 +7,7 @@ async function fetchUserBalance(): Promise<number> {
     try {
         const userId = sessionStorage.getItem('userId')
         const response = await fetch(
-            `https://localhost:42069/users/${userId}/balance`,
+            `http://api.localhost/users/${userId}/balance`,
             {
                 method: 'GET',
                 headers: {
@@ -29,7 +29,7 @@ async function fetchUserName(): Promise<string> {
     try {
         const userId = sessionStorage.getItem('userId')
         const response = await fetch(
-            `https://localhost:42069/users/${userId}/name`,
+            `http://api.localhost/users/${userId}/name`,
             {
                 method: 'GET',
                 headers: {

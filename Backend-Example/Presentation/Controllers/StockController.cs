@@ -80,7 +80,7 @@ namespace Backend_Example.Controllers
 
             stocks
                 .Map(
-                    "/stockWS",
+                    "/StockWS",
                     async (HttpContext context, DbStockEngine dbContext) =>
                     {
                         if (context.WebSockets.IsWebSocketRequest)

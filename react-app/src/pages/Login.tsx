@@ -29,11 +29,10 @@ const Login = () => {
     async function login(username: string, password: string) {
         try {
             const response = await fetch(
-                `https://localhost:42069/users/${username}/login?password=${password}`,
+                `http://api.localhost/users/${username}/login?password=${password}`,
                 {
                     method: 'GET',
                     headers: {
-                        'Access-Control-Allow-Origin': '*',
                         'Content-Type': 'application/json'
                     },
                     credentials: 'include'
@@ -66,7 +65,7 @@ const Login = () => {
         }
 
         try {
-            const response = await fetch(`https://localhost:42069/users/`, {
+            const response = await fetch(`http://api.localhost/users/`, {
                 method: 'POST',
                 headers: {
                     'Access-Control-Allow-Origin': '*',

@@ -13,20 +13,14 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var environment = Environment.GetEnvironmentVariable("TESTING");
-if (environment == "true")
+var conn = Environment.GetEnvironmentVariable("ConnectionString");
+if (conn == null)
 {
-    // Using SQLite for testing purposes in the CI/CD pipeline
-    builder.Services.AddDbContext<DbStockEngine>(options =>
-        options.UseSqlite("Data Source=:memory:") // In-memory SQLite for tests
-    );
+    conn = builder.Configuration.GetConnectionString("DefaultConnection");
 }
-else
-{
-    builder.Services.AddDbContext<DbStockEngine>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
-    );
-}
+builder.Services.AddDbContext<DbStockEngine>(options =>
+    options.UseSqlServer(conn)
+);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -35,12 +29,11 @@ builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(
-        "AllowFrontend",
+    options.AddDefaultPolicy(
         builder =>
         {
             builder
-                .WithOrigins("http://localhost:3000") // Frontend URL
+                .WithOrigins("http://localhost:3000", "http://localhost")
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials();
@@ -117,20 +110,16 @@ builder.Services.AddScoped<IUserDAL, UserDAL>();
 builder.Services.AddScoped<IStockDAL, StockDAL>();
 builder.Services.AddScoped<LineStock>();
 
-builder.Services.AddCors(policyBuilder =>
-    policyBuilder.AddDefaultPolicy(policy =>
-        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()
-    )
-);
-
 builder.Services.AddWebSockets(options => { });
 
 var app = builder.Build();
 
+app.UseCors();
+
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<DbStockEngine>();
-    dbContext.Database.EnsureCreated(); // Ensures the database is created and migrations are applied
+    dbContext.Database.Migrate();
 }
 
 if (app.Environment.IsDevelopment())
@@ -139,14 +128,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-app.UseStaticFiles();
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.UseCors("AllowFrontend");
 
 app.UseWebSockets();
 app.Stockcontroller(builder.Configuration);

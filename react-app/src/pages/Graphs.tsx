@@ -27,7 +27,7 @@ const SellButton = styled(Button)(() => ({
 
 async function fetchStockNames(): Promise<string[]> {
     try {
-        const response = await fetch('https://localhost:42069/stocks/names')
+        const response = await fetch('http://api.localhost/stocks/names')
         if (!response.ok) throw new Error('Failed to fetch stock names')
         return await response.json()
     } catch (error) {
@@ -40,7 +40,7 @@ async function fetchUserBalance(): Promise<number> {
     try {
         const userId = sessionStorage.getItem('userId')
         const response = await fetch(
-            `https://localhost:42069/users/${userId}/balance`,
+            `http://api.localhost/users/${userId}/balance`,
             {
                 method: 'GET',
                 headers: {
@@ -101,7 +101,7 @@ function Graphs() {
         new Interval(1, '1 day')
     ])
     const socket = useMemo(
-        () => new WebSocket(`wss://localhost:42069/stocks/StockWS`),
+        () => new WebSocket(`ws://api.localhost/stocks/StockWS`),
         []
     )
 
@@ -123,7 +123,7 @@ function Graphs() {
 
         const userId = sessionStorage.getItem('userId')
         const response = await fetch(
-            `https://localhost:42069/users/${userId}/stock`,
+            `http://api.localhost/users/${userId}/stock`,
             {
                 method: 'PUT',
                 headers: {
@@ -161,7 +161,7 @@ function Graphs() {
     useEffect(() => {
         const userId = sessionStorage.getItem('userId')
         fetch(
-            `https://localhost:42069/users/${userId}/stock/amount?ticker=${ticker}`,
+            `http://api.localhost/users/${userId}/stock/amount?ticker=${ticker}`,
             {
                 method: 'GET',
                 headers: {
