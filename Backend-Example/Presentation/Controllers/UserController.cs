@@ -1,4 +1,4 @@
-﻿using Backend_Example.Data.BDaccess;
+﻿using DAL.DbAccess;
 using Backend_Example.Models;
 using Logic.Functions;
 using Logic.Interfaces;
@@ -26,7 +26,7 @@ namespace Backend_Example.Controllers
                     if (password == "" || username == "")
                         return Results.BadRequest();
 
-                    DAL.BDaccess.UserDAL userDal = new(dbContext, userManager);
+                    UserDal userDal = new(dbContext, userManager);
                     bool user = await userDal.VerifyUser(username, password);
 
                     if (!user)
@@ -53,9 +53,8 @@ namespace Backend_Example.Controllers
                     if (registerRequest == null)
                         return Results.BadRequest();
 
-                    DAL.BDaccess.UserDAL userDal = new(dbContext, userManager);
-                    User user = new();
-                    var newUser = await user.AddUser(
+                    UserDal userDal = new(dbContext, userManager);
+                    var newUser = await User.AddUser(
                         userDal,
                         registerRequest.Name,
                         registerRequest.Password
@@ -93,7 +92,7 @@ namespace Backend_Example.Controllers
                         if (userIdFromToken != userId)
                             return Results.Forbid();
 
-                        DAL.BDaccess.UserDAL userDal = new(dbContext, userManager);
+                        UserDal userDal = new(dbContext, userManager);
                         var success = await userDal.DeleteUser(userId);
                         if (!success)
                         {
@@ -130,9 +129,8 @@ namespace Backend_Example.Controllers
                         if (userIdFromToken != userId)
                             return Results.Forbid();
 
-                        DAL.BDaccess.UserDAL userDal = new(dbContext, userManager);
-                        User user = new();
-                        var userBalance = await user.GetUserBalance(userDal, userId);
+                        UserDal userDal = new(dbContext, userManager);
+                        var userBalance = await User.GetUserBalance(userDal, userId);
 
                         return Results.Json(new { UserBalance = userBalance });
                     }
@@ -157,9 +155,8 @@ namespace Backend_Example.Controllers
                         if (id == "")
                             return Results.BadRequest();
 
-                        DAL.BDaccess.UserDAL userDal = new(dbContext, userManager);
-                        User user = new();
-                        var userName = await user.GetUserName(userDal, id);
+                        UserDal userDal = new(dbContext, userManager);
+                        var userName = await User.GetUserName(userDal, id);
 
                         return Results.Json(new { UserName = userName });
                     }
@@ -201,14 +198,13 @@ namespace Backend_Example.Controllers
                         )
                             return Results.BadRequest("Missing or invalid data.");
 
-                        DAL.BDaccess.UserDAL userDal = new(dbContext, userManager);
-                        User user = new();
+                        UserDal userDal = new(dbContext, userManager);
                         bool success;
 
                         switch (action)
                         {
                             case "buy":
-                                success = await user.BuyUserStock(
+                                success = await User.BuyUserStock(
                                     userDal,
                                     id,
                                     ticker,
@@ -217,7 +213,7 @@ namespace Backend_Example.Controllers
                                 );
                                 break;
                             case "sell":
-                                success = await user.SellUserStock(
+                                success = await User.SellUserStock(
                                     userDal,
                                     id,
                                     ticker,
@@ -239,15 +235,14 @@ namespace Backend_Example.Controllers
             users
                 .MapGet(
                     "/{id}/stock/amount",
-                    async (string id, string ticker, IUserDAL userDal, HttpContext context) =>
+                    async (string id, string ticker, IUserDal userDal, HttpContext context) =>
                     {
                         if (UserAuthorization(id, context) != Results.Ok())
                         {
                             return UserAuthorization(id, context);
                         }
-
-                        User user = new();
-                        double result = await user.GetUserStockAmount(userDal, id, ticker);
+                        
+                        var result = await User.GetUserStockAmount(userDal, id, ticker);
 
                         return Results.Json(result);
                     }

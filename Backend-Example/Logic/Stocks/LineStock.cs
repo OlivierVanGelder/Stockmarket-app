@@ -1,7 +1,7 @@
-﻿using Backend_Example.Logic.Classes;
-using Logic.Interfaces;
+﻿using Logic.Interfaces;
+using Logic.Models;
 
-namespace Backend_Example.Logic.Stocks
+namespace Logic.Stocks
 {
     public class LineStock
     {
@@ -10,10 +10,10 @@ namespace Backend_Example.Logic.Stocks
             DateTime startTime,
             DateTime endTime,
             TimeSpan interval,
-            IStockDAL stockDal
+            IStockDAal stockDAal
         )
         {
-            Task<LineItem[]> values = stockDal.GetLineValues(
+            Task<LineItem[]> values = stockDAal.GetLineValues(
                 stockName,
                 startTime,
                 endTime,

@@ -1,10 +1,9 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using Backend_Example.Data.BDaccess;
-using Backend_Example.Logic.Classes;
-using Backend_Example.Logic.Stocks;
-using DAL.BDaccess;
+using Logic.Models;
+using Logic.Stocks;
+using DAL.DbAccess;
 using Logic.Interfaces;
 
 namespace Backend_Example.Controllers
@@ -18,7 +17,7 @@ namespace Backend_Example.Controllers
             stocks
                 .MapGet(
                     "/names",
-                    (IStockDAL stockDal) =>
+                    (IStockDAal stockDal) =>
                     {
                         return CandleStock.GetStockNames(stockDal);
                     }
@@ -35,7 +34,7 @@ namespace Backend_Example.Controllers
                         double interval,
                         double start,
                         double end,
-                        IStockDAL stockDal
+                        IStockDAal stockDal
                     ) =>
                     {
                         if (ticker == "")
@@ -104,7 +103,7 @@ namespace Backend_Example.Controllers
 
         private static async Task ProvideStock(WebSocket webSocket, DbStockEngine dbContext)
         {
-            var stockDal = new StockDAL(dbContext);
+            var stockDal = new StockDal(dbContext);
 
             var buffer = new byte[1024];
             var receiveResult = await webSocket.ReceiveAsync(

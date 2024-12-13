@@ -1,4 +1,4 @@
-﻿using Backend_Example.Logic.Classes;
+﻿using Logic.Models;
 
 namespace TestStockEngine
 {

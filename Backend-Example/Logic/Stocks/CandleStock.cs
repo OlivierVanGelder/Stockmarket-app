@@ -1,7 +1,7 @@
-﻿using Backend_Example.Logic.Classes;
+﻿using Logic.Models;
 using Logic.Interfaces;
 
-namespace Backend_Example.Logic.Stocks
+namespace Logic.Stocks
 {
     public class CandleStock
     {
@@ -10,14 +10,14 @@ namespace Backend_Example.Logic.Stocks
             double startX,
             double endX,
             double intervalDays,
-            IStockDAL stockDAL
+            IStockDAal stockDal
         )
         {
             DateTime startDate = Converter.ConvertDigitToDate(startX);
             DateTime endDate = Converter.ConvertDigitToDate(endX);
             TimeSpan interval = TimeSpan.FromDays(intervalDays);
             Console.WriteLine($"startDate: {startDate} EndDate: {endDate}");
-            return stockDAL.GetCandleValues(stock, startDate, endDate, interval);
+            return stockDal.GetCandleValues(stock, startDate, endDate, interval);
         }
 
         public static CandleItem[] CreateCandleValues(
@@ -102,9 +102,9 @@ namespace Backend_Example.Logic.Stocks
             return lowValue;
         }
 
-        public static string[] GetStockNames(IStockDAL stockDAL)
+        public static string[] GetStockNames(IStockDAal stockDAal)
         {
-            return stockDAL.GetStockNames();
+            return stockDAal.GetStockNames();
         }
     }
 }

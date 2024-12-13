@@ -1,17 +1,15 @@
-﻿using Backend_Example.Logic.Classes;
-using Backend_Example.Logic.Stocks;
-using Logic.Interfaces;
+﻿using Logic.Interfaces;
 
 namespace Logic.Functions
 {
     public class StockDeletingInterval
     {
-        private System.Timers.Timer _timer;
+        private readonly System.Timers.Timer _timer;
 
-        public StockDeletingInterval(double intervalInSeconds, IStockDAL StockDAL)
+        public StockDeletingInterval(double intervalInSeconds, IStockDAal stockDAal)
         {
             _timer = new System.Timers.Timer(intervalInSeconds * 1000);
-            _timer.Elapsed += (sender, e) => DeleteDuplicates(StockDAL);
+            _timer.Elapsed += (sender, e) => DeleteDuplicates(stockDAal);
             _timer.AutoReset = true;
             _timer.Enabled = true;
         }
@@ -21,9 +19,9 @@ namespace Logic.Functions
             _timer.Stop();
         }
 
-        private static void DeleteDuplicates(IStockDAL StockDAL)
+        private static void DeleteDuplicates(IStockDAal stockDAal)
         {
-            StockDAL.DeleteDuplicateStocks();
+            stockDAal.DeleteDuplicateStocks();
         }
     }
 }

@@ -1,8 +1,8 @@
-﻿namespace Backend_Example.Logic.Classes
+﻿namespace Logic.Models
 {
     public class CandleItem
     {
-        public DateTime Date { get; set; } = DateTime.Now;
+        public DateTime Date { get; }
         public double Open { get; }
         public double Close { get; }
         public double High { get; }

@@ -1,12 +1,11 @@
-﻿namespace Backend_Example.Logic.Classes
+﻿namespace Logic.Models
 {
     public static class Converter
     {
         public static int ConvertWordToNumber(string word)
         {
-            word = word + "AAAA";
-            word.Substring(0, 4);
-            return word.ToUpper().Sum(c => c - 'A');
+            word += "AAAA";
+            return word.Substring(0, 4).ToUpper().Sum(c => c - 'A');
         }
 
         public static DateTime ConvertDigitToDate(double x)

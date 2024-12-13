@@ -1,17 +1,17 @@
-﻿using Backend_Example.Logic.Classes;
-using Backend_Example.Logic.Stocks;
+﻿using Logic.Models;
+using Logic.Stocks;
 using Logic.Interfaces;
 
 namespace Logic.Functions
 {
     public class StockWritingInterval
     {
-        private System.Timers.Timer _timer;
+        private readonly System.Timers.Timer _timer;
 
-        public StockWritingInterval(double intervalInSeconds, IStockDAL StockDAL)
+        public StockWritingInterval(double intervalInSeconds, IStockDAal stockDAal)
         {
             _timer = new System.Timers.Timer(intervalInSeconds * 1000);
-            _timer.Elapsed += (sender, e) => WriteStocks(StockDAL);
+            _timer.Elapsed += (sender, e) => WriteStocks(stockDAal);
             _timer.AutoReset = false;
             _timer.Enabled = true;
         }
@@ -21,13 +21,13 @@ namespace Logic.Functions
             _timer.Stop();
         }
 
-        private static void WriteStocks(IStockDAL StockDAL)
+        private static void WriteStocks(IStockDAal stockDAal)
         {
-            string[] names = StockDAL.GetStockNames();
-            foreach (string name in names)
+            var names = stockDAal.GetStockNames();
+            foreach (var name in names)
             {
-                double lastStockDigit = Converter.ConvertDateToDigit(StockDAL.GetLastStockDate());
-                double currentDateDigit = Converter.ConvertDateToDigit(
+                var lastStockDigit = Converter.ConvertDateToDigit(stockDAal.GetLastStockDate());
+                var currentDateDigit = Converter.ConvertDateToDigit(
                     DateTime
                         .Now.AddSeconds(-DateTime.Now.Second)
                         .AddMilliseconds(-DateTime.Now.Millisecond)
@@ -45,8 +45,8 @@ namespace Logic.Functions
                     currentDateDigit,
                     0.00069444444
                 );
-                StockDAL.WriteStocks(newStock, name);
-                StockDAL.DeleteDuplicateStocks();
+                stockDAal.WriteStocks(newStock, name);
+                stockDAal.DeleteDuplicateStocks();
             }
         }
     }

@@ -1,20 +1,17 @@
 ﻿using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
-using Backend_Example.Data.BDaccess;
 using DAL.Tables;
 using Logic.Interfaces;
 using Microsoft.AspNetCore.Identity;
 
-namespace DAL.BDaccess
+namespace DAL.DbAccess
 {
-    public class UserDAL : IUserDAL
+    public class UserDal : IUserDal
     {
-        private const int INITIALBALANCECENTS = 500000;
+        private const int InitialBalanceCents = 500000;
         private readonly DbStockEngine _context;
         private readonly UserManager<User> _userManager;
 
-        public UserDAL(DbStockEngine context, UserManager<User> userManager)
+        public UserDal(DbStockEngine context, UserManager<User> userManager)
         {
             _context = context;
             _userManager = userManager;
@@ -28,7 +25,7 @@ namespace DAL.BDaccess
 
         public async Task<bool> AddUserAsync(string name, string password)
         {
-            var user = new User { UserName = name, BalanceInCents = INITIALBALANCECENTS };
+            var user = new User { UserName = name, BalanceInCents = InitialBalanceCents };
 
             var result = await _userManager.CreateAsync(user, password);
 
@@ -91,15 +88,12 @@ namespace DAL.BDaccess
             {
                 return true;
             }
-            else
+            foreach (var error in result.Errors)
             {
-                foreach (var error in result.Errors)
-                {
-                    Debug.WriteLine(error.Description);
-                }
-
-                return false;
+                Debug.WriteLine(error.Description);
             }
+
+            return false;
         }
 
         public async Task<bool> UpdateUserBalance(string id, double balance, double change)
@@ -229,14 +223,14 @@ namespace DAL.BDaccess
 
         public async Task<string> GetUserId(string name)
         {
-            var userId = (await _userManager.FindByNameAsync(name)).Id;
+            var userId = (await _userManager.FindByNameAsync(name)?? new User()).Id;
             return userId;
         }
 
         public async Task<double> GetUserBalance(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
-            double userBalance = user.BalanceInCents / 100.0;
+            var userBalance = (user ?? new User()).BalanceInCents / 100.0;
 
             return userBalance;
         }
@@ -244,7 +238,7 @@ namespace DAL.BDaccess
         public async Task<string> GetUserName(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
-            string userName = user.UserName;
+            var userName = (user ?? new User()).UserName;
 
             return userName;
         }

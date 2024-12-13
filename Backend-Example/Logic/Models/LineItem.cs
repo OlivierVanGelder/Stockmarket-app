@@ -1,4 +1,4 @@
-﻿namespace Backend_Example.Logic.Classes
+﻿namespace Logic.Models
 {
     public class LineItem
     {

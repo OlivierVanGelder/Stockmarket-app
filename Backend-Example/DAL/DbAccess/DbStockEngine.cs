@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace Backend_Example.Data.BDaccess
+namespace DAL.DbAccess
 {
     public class DbStockEngine : IdentityDbContext<User>
     {

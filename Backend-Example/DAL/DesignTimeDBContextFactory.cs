@@ -2,8 +2,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
+using DAL.DbAccess;
 
-namespace Backend_Example.Data.BDaccess
+namespace DAL
 {
     public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<DbStockEngine>
     {

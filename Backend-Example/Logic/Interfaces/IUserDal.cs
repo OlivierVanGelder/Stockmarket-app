@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Logic.Interfaces
+﻿namespace Logic.Interfaces
 {
-    public interface IUserDAL
+    public interface IUserDal
     {
         string[] GetUsers();
         Task<bool> AddUserAsync(string name, string password);

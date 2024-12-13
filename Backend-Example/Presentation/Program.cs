@@ -1,8 +1,7 @@
 using System.Text;
 using Backend_Example.Controllers;
-using Backend_Example.Data.BDaccess;
-using Backend_Example.Logic.Stocks;
-using DAL.BDaccess;
+using Logic.Stocks;
+using DAL.DbAccess;
 using DAL.Tables;
 using Logic.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -30,9 +29,9 @@ builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(
-        builder =>
+        b =>
         {
-            builder
+            b
                 .WithOrigins("http://localhost:3000", "http://localhost")
                 .AllowAnyMethod()
                 .AllowAnyHeader()
@@ -107,8 +106,8 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.Password.RequireNonAlphanumeric = false;
 });
 
-builder.Services.AddScoped<IUserDAL, UserDAL>();
-builder.Services.AddScoped<IStockDAL, StockDAL>();
+builder.Services.AddScoped<IUserDal, UserDal>();
+builder.Services.AddScoped<IStockDAal, StockDal>();
 builder.Services.AddScoped<LineStock>();
 
 builder.Services.AddWebSockets(options => {});

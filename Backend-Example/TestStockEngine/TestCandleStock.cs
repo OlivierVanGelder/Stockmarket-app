@@ -1,5 +1,5 @@
-using Backend_Example.Logic.Classes;
-using Backend_Example.Logic.Stocks;
+using Logic.Models;
+using Logic.Stocks;
 
 namespace TestStockEngine
 {

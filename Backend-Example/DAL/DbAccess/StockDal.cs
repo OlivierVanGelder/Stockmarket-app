@@ -1,16 +1,16 @@
-﻿using Backend_Example.Logic.Classes;
+﻿using Logic.Models;
 using DAL.Tables;
 using Logic.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace DAL.BDaccess
+namespace DAL.DbAccess
 {
-    public class StockDAal : IStockDAal
+    public class StockDal : IStockDAal
     {
-        private readonly Backend_Example.Data.BDaccess.DbStockEngine _context;
+        private readonly DbStockEngine _context;
 
         // Constructor injection of DbContext
-        public StockDAal(Backend_Example.Data.BDaccess.DbStockEngine context)
+        public StockDal(DbStockEngine context)
         {
             _context = context;
         }
