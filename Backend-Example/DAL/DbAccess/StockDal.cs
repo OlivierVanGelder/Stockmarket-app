@@ -5,12 +5,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL.BDaccess
 {
-    public class StockDAL : IStockDAL
+    public class StockDAal : IStockDAal
     {
         private readonly Backend_Example.Data.BDaccess.DbStockEngine _context;
 
         // Constructor injection of DbContext
-        public StockDAL(Backend_Example.Data.BDaccess.DbStockEngine context)
+        public StockDAal(Backend_Example.Data.BDaccess.DbStockEngine context)
         {
             _context = context;
         }
