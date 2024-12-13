@@ -21,6 +21,6 @@ jobs:
             - name: Install dependencies
               run: pnpm install -r
 
-            - name: Run Code quality lint tests for Klant
+            - name: Run Code quality lint tests for Klantenapp
               working-directory: ./react-app
               run: pnpm npx eslint
