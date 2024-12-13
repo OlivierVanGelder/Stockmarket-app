@@ -59,14 +59,15 @@ builder
         {
             OnAuthenticationFailed = context =>
             {
-                if (context.Exception != null)
+                if (context.Exception.InnerException == null)
                 {
-                    context.Response.StatusCode = 401;
-                    context.Response.ContentType = "application/json";
-                    var responseMessage = new { message = "Authentication failed" };
-                    return context.Response.WriteAsJsonAsync(responseMessage);
-                }
-                return Task.CompletedTask;
+                    return Task.CompletedTask; }
+                
+                context.Response.StatusCode = 401;
+                context.Response.ContentType = "application/json";
+                var responseMessage = new { message = "Authentication failed" };
+                return context.Response.WriteAsJsonAsync(responseMessage);
+
             },
             OnChallenge = context =>
             {
@@ -91,7 +92,7 @@ builder
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "")
             ),
         };
     });
@@ -110,7 +111,7 @@ builder.Services.AddScoped<IUserDAL, UserDAL>();
 builder.Services.AddScoped<IStockDAL, StockDAL>();
 builder.Services.AddScoped<LineStock>();
 
-builder.Services.AddWebSockets(options => { });
+builder.Services.AddWebSockets(options => {});
 
 var app = builder.Build();
 

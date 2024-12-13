@@ -18,9 +18,9 @@ namespace Backend_Example.Controllers
             stocks
                 .MapGet(
                     "/names",
-                    async (IStockDAL stockDAL) =>
+                    (IStockDAL stockDal) =>
                     {
-                        return CandleStock.GetStockNames(stockDAL);
+                        return CandleStock.GetStockNames(stockDal);
                     }
                 )
                 .WithName("GetStockNames")
@@ -35,44 +35,47 @@ namespace Backend_Example.Controllers
                         double interval,
                         double start,
                         double end,
-                        IStockDAL stockDAL
+                        IStockDAL stockDal
                     ) =>
                     {
-                        if (ticker == null)
+                        if (ticker == "")
                         {
                             return null;
                         }
 
-                        if (type == "line")
+                        switch (type)
                         {
-                            LineStock stock = new();
-                            DateTime startDate = Converter.ConvertDigitToDate(start);
-                            DateTime endDate = Converter.ConvertDigitToDate(end);
-                            TimeSpan intervalSpan = TimeSpan.FromDays(interval);
+                            case "line":
+                            {
+                                LineStock stock = new();
+                                var startDate = Converter.ConvertDigitToDate(start);
+                                var endDate = Converter.ConvertDigitToDate(end);
+                                var intervalSpan = TimeSpan.FromDays(interval);
 
-                            LineItem[] results = await stock.GetValues(
-                                ticker,
-                                startDate,
-                                endDate,
-                                intervalSpan,
-                                stockDAL
-                            );
+                                var results = await stock.GetValues(
+                                    ticker,
+                                    startDate,
+                                    endDate,
+                                    intervalSpan,
+                                    stockDal
+                                );
 
-                            return Results.Json(results);
+                                return Results.Json(results);
+                            }
+                            case "Candle":
+                            {
+                                var results = await CandleStock.GetCandleValues(
+                                    ticker,
+                                    start,
+                                    end,
+                                    interval,
+                                    stockDal
+                                );
+
+                                return Results.Json(results);
+                            }
+                            default: return null;
                         }
-                        else if (type == "candle ")
-                        {
-                            CandleItem[] results = await CandleStock.GetCandleValues(
-                                ticker,
-                                start,
-                                end,
-                                interval,
-                                stockDAL
-                            );
-
-                            return Results.Json(results);
-                        }
-                        return null;
                     }
                 )
                 .WithName("GetStockFromTicker")
@@ -101,7 +104,7 @@ namespace Backend_Example.Controllers
 
         private static async Task ProvideStock(WebSocket webSocket, DbStockEngine dbContext)
         {
-            var stockDAL = new StockDAL(dbContext);
+            var stockDal = new StockDAL(dbContext);
 
             var buffer = new byte[1024];
             var receiveResult = await webSocket.ReceiveAsync(
@@ -111,7 +114,7 @@ namespace Backend_Example.Controllers
 
             while (!receiveResult.CloseStatus.HasValue)
             {
-                string[] message = Encoding.UTF8.GetString(buffer).Split('-');
+                var message = Encoding.UTF8.GetString(buffer).Split('-');
                 if (message.Length == 4)
                 {
                     LineStock lineStock = new();
@@ -122,7 +125,7 @@ namespace Backend_Example.Controllers
                     );
                     TimeSpan intervalSpan = TimeSpan.FromDays(double.Parse(message[1]));
                     string resultJson = JsonSerializer.Serialize(
-                        await lineStock.GetValues(stock, startDate, endDate, intervalSpan, stockDAL)
+                        await lineStock.GetValues(stock, startDate, endDate, intervalSpan, stockDal)
                     );
                     byte[] resultBuffer = Encoding.UTF8.GetBytes(resultJson);
 
@@ -144,7 +147,7 @@ namespace Backend_Example.Controllers
                         startX,
                         endX,
                         interval,
-                        stockDAL
+                        stockDal
                     );
 
                     string resultJson = JsonSerializer.Serialize(results);

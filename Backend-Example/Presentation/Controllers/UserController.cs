@@ -19,23 +19,22 @@ namespace Backend_Example.Controllers
                 async (
                     string username,
                     string password,
-                    HttpContext context,
                     DbStockEngine dbContext,
                     UserManager<DAL.Tables.User> userManager
                 ) =>
                 {
-                    if (password == null || username == null)
+                    if (password == "" || username == "")
                         return Results.BadRequest();
 
-                    DAL.BDaccess.UserDAL userDAL = new(dbContext, userManager);
-                    bool user = await userDAL.VerifyUser(username, password);
+                    DAL.BDaccess.UserDAL userDal = new(dbContext, userManager);
+                    bool user = await userDal.VerifyUser(username, password);
 
                     if (!user)
                         return Results.Unauthorized();
 
-                    string userId = await userDAL.GetUserId(username);
+                    var userId = await userDal.GetUserId(username);
 
-                    string secretKey = configuration["Jwt:Key"];
+                    var secretKey = configuration["Jwt:Key"] ?? "";
 
                     var token = JwtHelper.GenerateToken(username, userId, secretKey);
                     return Results.Json(new { token, userId });
@@ -54,19 +53,19 @@ namespace Backend_Example.Controllers
                     if (registerRequest == null)
                         return Results.BadRequest();
 
-                    DAL.BDaccess.UserDAL userDAL = new(dbContext, userManager);
+                    DAL.BDaccess.UserDAL userDal = new(dbContext, userManager);
                     User user = new();
-                    bool newUser = await user.AddUser(
-                        userDAL,
+                    var newUser = await user.AddUser(
+                        userDal,
                         registerRequest.Name,
                         registerRequest.Password
                     );
 
                     if (!newUser)
                         return Results.Conflict();
-                    string userId = await userDAL.GetUserId(registerRequest.Name);
-                    string secretKey = configuration["Jwt:Key"];
-                    var token = JwtHelper.GenerateToken(registerRequest.Name, userId, secretKey);
+                    var userId = await userDal.GetUserId(registerRequest.Name);
+                    var secretKey = configuration["Jwt:Key"];
+                    var token = JwtHelper.GenerateToken(registerRequest.Name, userId, secretKey ?? "");
                     return Results.Json(new { Token = token, UserId = userId });
                 }
             );
@@ -94,10 +93,12 @@ namespace Backend_Example.Controllers
                         if (userIdFromToken != userId)
                             return Results.Forbid();
 
-                        DAL.BDaccess.UserDAL userDAL = new(dbContext, userManager);
-                        bool succes = await userDAL.DeleteUser(userId);
-                        if (!succes)
-                            return Results.Conflict();
+                        DAL.BDaccess.UserDAL userDal = new(dbContext, userManager);
+                        var success = await userDal.DeleteUser(userId);
+                        if (!success)
+                        {
+                            return Results.Conflict();   
+                        }
                         return Results.Ok();
                     }
                 )
@@ -118,10 +119,10 @@ namespace Backend_Example.Controllers
                             return UserAuthorization(userId, context);
                         }
 
-                        if (userId == null)
+                        if (userId == "")
                             return Results.BadRequest();
 
-                        string? userIdFromToken = context.User.FindFirst("userId")?.Value;
+                        var userIdFromToken = context.User.FindFirst("userId")?.Value;
 
                         if (string.IsNullOrEmpty(userIdFromToken))
                             return Results.Unauthorized();
@@ -129,9 +130,9 @@ namespace Backend_Example.Controllers
                         if (userIdFromToken != userId)
                             return Results.Forbid();
 
-                        DAL.BDaccess.UserDAL userDAL = new(dbContext, userManager);
+                        DAL.BDaccess.UserDAL userDal = new(dbContext, userManager);
                         User user = new();
-                        double userBalance = await user.GetUserBalance(userDAL, userId);
+                        var userBalance = await user.GetUserBalance(userDal, userId);
 
                         return Results.Json(new { UserBalance = userBalance });
                     }
@@ -153,12 +154,12 @@ namespace Backend_Example.Controllers
                             return UserAuthorization(id, context);
                         }
 
-                        if (id == null)
+                        if (id == "")
                             return Results.BadRequest();
 
-                        DAL.BDaccess.UserDAL userDAL = new(dbContext, userManager);
+                        DAL.BDaccess.UserDAL userDal = new(dbContext, userManager);
                         User user = new();
-                        string userName = await user.GetUserName(userDAL, id);
+                        var userName = await user.GetUserName(userDal, id);
 
                         return Results.Json(new { UserName = userName });
                     }
@@ -186,10 +187,10 @@ namespace Backend_Example.Controllers
                         if (stockTradeRequest == null)
                             return Results.BadRequest("Invalid request payload.");
 
-                        int? amount = stockTradeRequest.Amount;
-                        string? ticker = stockTradeRequest.Ticker;
-                        double? price = stockTradeRequest.Price;
-                        string? action = stockTradeRequest.Action?.ToLower();
+                        var amount = stockTradeRequest.Amount;
+                        var ticker = stockTradeRequest.Ticker;
+                        var price = stockTradeRequest.Price;
+                        var action = stockTradeRequest.Action?.ToLower();
 
                         if (
                             string.IsNullOrEmpty(id)
@@ -200,15 +201,15 @@ namespace Backend_Example.Controllers
                         )
                             return Results.BadRequest("Missing or invalid data.");
 
-                        DAL.BDaccess.UserDAL userDAL = new(dbContext, userManager);
+                        DAL.BDaccess.UserDAL userDal = new(dbContext, userManager);
                         User user = new();
-                        bool success = false;
+                        bool success;
 
                         switch (action)
                         {
                             case "buy":
                                 success = await user.BuyUserStock(
-                                    userDAL,
+                                    userDal,
                                     id,
                                     ticker,
                                     amount.Value,
@@ -217,7 +218,7 @@ namespace Backend_Example.Controllers
                                 break;
                             case "sell":
                                 success = await user.SellUserStock(
-                                    userDAL,
+                                    userDal,
                                     id,
                                     ticker,
                                     amount.Value,
@@ -238,7 +239,7 @@ namespace Backend_Example.Controllers
             users
                 .MapGet(
                     "/{id}/stock/amount",
-                    async (string id, string ticker, IUserDAL userDAL, HttpContext context) =>
+                    async (string id, string ticker, IUserDAL userDal, HttpContext context) =>
                     {
                         if (UserAuthorization(id, context) != Results.Ok())
                         {
@@ -246,7 +247,7 @@ namespace Backend_Example.Controllers
                         }
 
                         User user = new();
-                        double result = await user.GetUserStockAmount(userDAL, id, ticker);
+                        double result = await user.GetUserStockAmount(userDal, id, ticker);
 
                         return Results.Json(result);
                     }
@@ -258,15 +259,15 @@ namespace Backend_Example.Controllers
 
         private static IResult UserAuthorization(string userId, HttpContext context)
         {
-            if (userId == null)
+            if (userId == "")
                 return Results.BadRequest();
 
-            string? userIdFromToken = context.User.FindFirst("userId")?.Value;
+            var userIdFromToken = context.User.FindFirst("userId")?.Value;
 
             if (string.IsNullOrEmpty(userIdFromToken))
                 return Results.Unauthorized();
 
-            if (userIdFromToken != userId)
+            if(userIdFromToken != userId)  
                 return Results.Forbid();
             return Results.Ok();
         }
