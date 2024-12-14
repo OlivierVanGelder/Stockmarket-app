@@ -1,7 +1,7 @@
 ﻿using Logic.Models;
 
-namespace TestStockEngine
-{
+namespace TestStockEngine;
+
     [TestClass]
     public class TestTicker
     {
@@ -14,10 +14,9 @@ namespace TestStockEngine
         public void TestConvertWordToNumber(string tickername, int expected)
         {
             // Act
-            int result = Converter.ConvertWordToNumber(tickername);
+            var result = Converter.ConvertWordToNumber(tickername);
 
             // Assert
             Assert.AreEqual(expected, result);
         }
     }
-}

@@ -1,7 +1,7 @@
 ﻿using Logic.Models;
 
-namespace TestStockEngine
-{
+namespace TestStockEngine;
+
     [TestClass]
     public class TestFormula
     {
@@ -16,10 +16,9 @@ namespace TestStockEngine
             // Arrange
 
             // Act
-            double? result = Formula.CalculateFormula(x, mS);
+            var result = Formula.CalculateFormula(x, mS);
 
             // Assert
             Assert.IsNotNull(result);
         }
     }
-}

@@ -149,7 +149,8 @@ namespace DAL.DbAccess
             {
                 return lines;
             }
-            lines[lines.Length - 1].Value = candles.LastOrDefault().Close / 100.00;
+            var lastCandle = candles.LastOrDefault();
+            lines[^1].Value = lastCandle != null ? lastCandle.Close / 100.00 : 0;
 
             return lines;
         }

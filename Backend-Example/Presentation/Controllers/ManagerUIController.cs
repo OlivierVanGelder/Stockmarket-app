@@ -1,14 +1,14 @@
 ﻿namespace Backend_Example.Controllers
 {
-    public static class ManagerUIController
+    public static class ManagerUiController
     {
-        public static void ManagerUIcontroller(this WebApplication app)
+        public static void NewManagerUiController(this WebApplication app, IConfiguration configuration)
         {
             app.MapGet(
                     "/example",
                     () =>
                     {
-                        return "Hello World!";
+                        return () => "Hello World!";
                     }
                 )
                 .WithName("example")

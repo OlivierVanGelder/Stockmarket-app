@@ -1,11 +1,11 @@
 ﻿using Logic.Interfaces;
 using Logic.Models;
 
-namespace Logic.Stocks
-{
+namespace Logic.Stocks;
+
     public class LineStock
     {
-        public Task<LineItem[]> GetValues(
+        public static Task<LineItem[]> GetValues(
             string stockName,
             DateTime startTime,
             DateTime endTime,
@@ -13,7 +13,7 @@ namespace Logic.Stocks
             IStockDAal stockDAal
         )
         {
-            Task<LineItem[]> values = stockDAal.GetLineValues(
+            var values = stockDAal.GetLineValues(
                 stockName,
                 startTime,
                 endTime,
@@ -22,4 +22,3 @@ namespace Logic.Stocks
             return values;
         }
     }
-}

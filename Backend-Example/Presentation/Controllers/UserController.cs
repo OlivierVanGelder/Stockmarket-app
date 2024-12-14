@@ -5,12 +5,12 @@ using Logic.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 
-namespace Backend_Example.Controllers
-{
+namespace Backend_Example.Controllers;
+
     [Authorize]
     public static class UserController
     {
-        public static void Usercontroller(this WebApplication app, IConfiguration configuration)
+        public static void NewUserController(this WebApplication app, IConfiguration configuration)
         {
             var users = app.MapGroup("/users").WithTags("Users");
 
@@ -27,7 +27,7 @@ namespace Backend_Example.Controllers
                         return Results.BadRequest();
 
                     UserDal userDal = new(dbContext, userManager);
-                    bool user = await userDal.VerifyUser(username, password);
+                    var user = await userDal.VerifyUser(username, password);
 
                     if (!user)
                         return Results.Unauthorized();
@@ -84,7 +84,7 @@ namespace Backend_Example.Controllers
                             return UserAuthorization(userId, context);
                         }
 
-                        string? userIdFromToken = context.User.FindFirst("userId")?.Value;
+                        var userIdFromToken = context.User.FindFirst("userId")?.Value;
 
                         if (string.IsNullOrEmpty(userIdFromToken))
                             return Results.Unauthorized();
@@ -94,11 +94,7 @@ namespace Backend_Example.Controllers
 
                         UserDal userDal = new(dbContext, userManager);
                         var success = await userDal.DeleteUser(userId);
-                        if (!success)
-                        {
-                            return Results.Conflict();   
-                        }
-                        return Results.Ok();
+                        return success ? Results.Ok() : Results.Conflict();
                     }
                 )
                 .RequireAuthorization();
@@ -262,9 +258,6 @@ namespace Backend_Example.Controllers
             if (string.IsNullOrEmpty(userIdFromToken))
                 return Results.Unauthorized();
 
-            if(userIdFromToken != userId)  
-                return Results.Forbid();
-            return Results.Ok();
+            return userIdFromToken == userId ? Results.Ok() : Results.Forbid();
         }
     }
-}

@@ -13,12 +13,8 @@ using Microsoft.IdentityModel.Tokens;
 var builder = WebApplication.CreateBuilder(args);
 
 var conn = Environment.GetEnvironmentVariable("ConnectionString");
-if (conn == null)
-{
-    conn = builder.Configuration.GetConnectionString("DefaultConnection");
-}
 builder.Services.AddDbContext<DbStockEngine>(options =>
-    options.UseSqlServer(conn)
+    options.UseSqlServer(conn ?? builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
 builder.Services.AddEndpointsApiExplorer();
@@ -70,16 +66,16 @@ builder
             },
             OnChallenge = context =>
             {
-                if (!context.Response.HasStarted)
+                if (context.Response.HasStarted)
                 {
-                    context.HandleResponse();
-                    context.Response.StatusCode = 401;
-                    context.Response.ContentType = "application/json";
-                    var responseMessage = new { message = "Authentication required" };
-                    return context.Response.WriteAsJsonAsync(responseMessage);
+                    return Task.CompletedTask;
                 }
-                return Task.CompletedTask;
-            },
+                context.HandleResponse();
+                context.Response.StatusCode = 401;
+                context.Response.ContentType = "application/json";
+                var responseMessage = new { message = "Authentication required" };
+                return context.Response.WriteAsJsonAsync(responseMessage);
+            }
         };
 
         options.TokenValidationParameters = new TokenValidationParameters
@@ -92,7 +88,7 @@ builder
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "")
-            ),
+            )
         };
     });
 
@@ -110,7 +106,7 @@ builder.Services.AddScoped<IUserDal, UserDal>();
 builder.Services.AddScoped<IStockDAal, StockDal>();
 builder.Services.AddScoped<LineStock>();
 
-builder.Services.AddWebSockets(options => {});
+builder.Services.AddWebSockets(_ => {});
 
 var app = builder.Build();
 
@@ -133,7 +129,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseWebSockets();
-app.Stockcontroller(builder.Configuration);
-app.Usercontroller(builder.Configuration);
+app.NewManagerUiController(builder.Configuration);
+app.NewStockController(builder.Configuration);
+app.NewUserController(builder.Configuration);
 
 app.Run();

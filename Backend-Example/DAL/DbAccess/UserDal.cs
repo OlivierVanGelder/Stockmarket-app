@@ -223,7 +223,7 @@ namespace DAL.DbAccess
 
         public async Task<string> GetUserId(string name)
         {
-            var userId = (await _userManager.FindByNameAsync(name)?? new User()).Id;
+            var userId = (await _userManager.FindByNameAsync(name) ?? new User()).Id;
             return userId;
         }
 

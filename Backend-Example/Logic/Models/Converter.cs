@@ -1,38 +1,37 @@
-﻿namespace Logic.Models
+﻿namespace Logic.Models;
+
+public static class Converter
 {
-    public static class Converter
+    public static int ConvertWordToNumber(string word)
     {
-        public static int ConvertWordToNumber(string word)
-        {
-            word += "AAAA";
-            return word.Substring(0, 4).ToUpper().Sum(c => c - 'A');
-        }
+        word += "AAAA";
+        return word.Substring(0, 4).ToUpper().Sum(c => c - 'A');
+    }
 
-        public static DateTime ConvertDigitToDate(double x)
-        {
-            DateTime baseDate = new DateTime(2020, 11, 1, 12, 0, 0);
-            double totalIncrement = x;
-            DateTime currentDate = baseDate;
-            currentDate = currentDate.AddDays(Math.Floor(totalIncrement));
+    public static DateTime ConvertDigitToDate(double x)
+    {
+        DateTime baseDate = new DateTime(2020, 11, 1, 12, 0, 0);
+        double totalIncrement = x;
+        DateTime currentDate = baseDate;
+        currentDate = currentDate.AddDays(Math.Floor(totalIncrement));
 
-            double fractionalPart = totalIncrement - Math.Floor(totalIncrement);
-            int hoursIncrement = (int)(fractionalPart / 0.04166666667);
-            currentDate = currentDate.AddHours(hoursIncrement);
+        var fractionalPart = totalIncrement - Math.Floor(totalIncrement);
+        var hoursIncrement = (int)(fractionalPart / 0.04166666667);
+        currentDate = currentDate.AddHours(hoursIncrement);
 
-            double remainingFraction = fractionalPart % 0.04166666667;
-            int minutesIncrement = (int)(remainingFraction / 0.0006944444444);
-            currentDate = currentDate.AddMinutes(minutesIncrement);
+        var remainingFraction = fractionalPart % 0.04166666667;
+        var minutesIncrement = (int)(remainingFraction / 0.0006944444444);
+        currentDate = currentDate.AddMinutes(minutesIncrement);
 
-            return currentDate;
-        }
+        return currentDate;
+    }
 
-        public static double ConvertDateToDigit(DateTime dateTime)
-        {
-            DateTime baseDate = new DateTime(2020, 11, 1, 12, 0, 0);
+    public static double ConvertDateToDigit(DateTime dateTime)
+    {
+        var baseDate = new DateTime(2020, 11, 1, 12, 0, 0);
 
-            TimeSpan timeDifference = dateTime - baseDate;
-            double totalDays = timeDifference.TotalDays;
-            return Math.Round(totalDays, 15);
-        }
+        var timeDifference = dateTime - baseDate;
+        var totalDays = timeDifference.TotalDays;
+        return Math.Round(totalDays, 15);
     }
 }

@@ -10,7 +10,7 @@ namespace Backend_Example.Controllers
 {
     public static class StockController
     {
-        public static void Stockcontroller(this WebApplication app, IConfiguration configuration)
+        public static void NewStockController(this WebApplication app, IConfiguration configuration)
         {
             var stocks = app.MapGroup("/stocks").WithTags("Stocks");
 
@@ -19,7 +19,7 @@ namespace Backend_Example.Controllers
                     "/names",
                     (IStockDAal stockDal) =>
                     {
-                        return CandleStock.GetStockNames(stockDal);
+                        return () => CandleStock.GetStockNames(stockDal);
                     }
                 )
                 .WithName("GetStockNames")
@@ -46,12 +46,11 @@ namespace Backend_Example.Controllers
                         {
                             case "line":
                             {
-                                LineStock stock = new();
                                 var startDate = Converter.ConvertDigitToDate(start);
                                 var endDate = Converter.ConvertDigitToDate(end);
                                 var intervalSpan = TimeSpan.FromDays(interval);
 
-                                var results = await stock.GetValues(
+                                var results = await LineStock.GetValues(
                                     ticker,
                                     startDate,
                                     endDate,
@@ -116,17 +115,16 @@ namespace Backend_Example.Controllers
                 var message = Encoding.UTF8.GetString(buffer).Split('-');
                 if (message.Length == 4)
                 {
-                    LineStock lineStock = new();
-                    string stock = message[0].Replace("\"", "");
-                    DateTime startDate = Converter.ConvertDigitToDate(double.Parse(message[2]));
-                    DateTime endDate = Converter.ConvertDigitToDate(
+                    var stock = message[0].Replace("\"", "");
+                    var startDate = Converter.ConvertDigitToDate(double.Parse(message[2]));
+                    var endDate = Converter.ConvertDigitToDate(
                         double.Parse(message[3].Replace("\"", ""))
                     );
                     TimeSpan intervalSpan = TimeSpan.FromDays(double.Parse(message[1]));
-                    string resultJson = JsonSerializer.Serialize(
-                        await lineStock.GetValues(stock, startDate, endDate, intervalSpan, stockDal)
+                    var resultJson = JsonSerializer.Serialize(
+                        await LineStock.GetValues(stock, startDate, endDate, intervalSpan, stockDal)
                     );
-                    byte[] resultBuffer = Encoding.UTF8.GetBytes(resultJson);
+                    var resultBuffer = Encoding.UTF8.GetBytes(resultJson);
 
                     await webSocket.SendAsync(
                         new ArraySegment<byte>(resultBuffer),
@@ -137,11 +135,11 @@ namespace Backend_Example.Controllers
                 }
                 else if (message.Length == 5)
                 {
-                    string stock = message[0].Replace("\"", "");
-                    double interval = double.Parse(message[1]);
-                    double startX = double.Parse(message[2]);
-                    double endX = double.Parse(message[3].Replace("\"", ""));
-                    CandleItem[] results = await CandleStock.GetCandleValues(
+                    var stock = message[0].Replace("\"", "");
+                    var interval = double.Parse(message[1]);
+                    var startX = double.Parse(message[2]);
+                    var endX = double.Parse(message[3].Replace("\"", ""));
+                    var results = await CandleStock.GetCandleValues(
                         stock,
                         startX,
                         endX,
@@ -149,8 +147,8 @@ namespace Backend_Example.Controllers
                         stockDal
                     );
 
-                    string resultJson = JsonSerializer.Serialize(results);
-                    byte[] resultBuffer = Encoding.UTF8.GetBytes(resultJson);
+                    var resultJson = JsonSerializer.Serialize(results);
+                    var resultBuffer = Encoding.UTF8.GetBytes(resultJson);
 
                     await webSocket.SendAsync(
                         new ArraySegment<byte>(resultBuffer),
