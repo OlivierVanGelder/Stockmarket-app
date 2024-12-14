@@ -33,15 +33,12 @@ namespace DAL.DbAccess
             {
                 return true;
             }
-            else
+            foreach (var error in result.Errors)
             {
-                foreach (var error in result.Errors)
-                {
-                    Debug.WriteLine(error.Description);
-                }
-
-                return false;
+                Debug.WriteLine(error.Description);
             }
+
+            return false;
         }
 
         public async Task<bool> VerifyNewUser(string username)
@@ -63,15 +60,12 @@ namespace DAL.DbAccess
             {
                 return true;
             }
-            else
+            foreach (var error in result.Errors)
             {
-                foreach (var error in result.Errors)
-                {
-                    Debug.WriteLine(error.Description);
-                }
-
-                return false;
+                Debug.WriteLine(error.Description);
             }
+
+            return false;
         }
 
         private async Task<bool> UpdateUserBalance(string id, double balance)
@@ -110,15 +104,12 @@ namespace DAL.DbAccess
             {
                 return true;
             }
-            else
+            foreach (var error in result.Errors)
             {
-                foreach (var error in result.Errors)
-                {
-                    Debug.WriteLine(error.Description);
-                }
-
-                return false;
+                Debug.WriteLine(error.Description);
             }
+
+            return false;
         }
 
         /// <exception cref="ArgumentException"></exception>
@@ -154,11 +145,11 @@ namespace DAL.DbAccess
             );
             if (userStock == null)
             {
-                var newUserStock = new User_Stock
+                var newUserStock = new UserStock
                 {
                     UserId = user.Id,
                     StockId = stock.Id,
-                    StockAmount = amount,
+                    StockAmount = amount
                 };
                 _context.User_Stocks.Add(newUserStock);
             }
@@ -166,11 +157,13 @@ namespace DAL.DbAccess
             {
                 userStock.StockAmount += amount;
             }
-            double oldBalance = await GetUserBalance(id);
-            double newBalance = oldBalance - (price * amount);
-            await UpdateUserBalance(id, newBalance);
-
-            _context.SaveChanges();
+            var oldBalance = await GetUserBalance(id);
+            var newBalance = oldBalance - (price * amount);
+            if (!await UpdateUserBalance(id, newBalance))
+            {
+                return false;
+            }
+            await _context.SaveChangesAsync();
             return true;
         }
 
@@ -188,11 +181,11 @@ namespace DAL.DbAccess
             );
             if (userStock == null)
             {
-                var newUserStock = new User_Stock
+                var newUserStock = new UserStock
                 {
                     UserId = user.Id,
                     StockId = stock.Id,
-                    StockAmount = amount,
+                    StockAmount = amount
                 };
                 _context.User_Stocks.Add(newUserStock);
             }
@@ -204,11 +197,11 @@ namespace DAL.DbAccess
                 }
                 userStock.StockAmount -= amount;
             }
-            double oldBalance = await GetUserBalance(id);
-            double newBalance = oldBalance + (price * amount);
+            var oldBalance = await GetUserBalance(id);
+            var newBalance = oldBalance + price * amount;
             await UpdateUserBalance(id, newBalance);
 
-            _context.SaveChanges();
+           await _context.SaveChangesAsync();
             return true;
         }
 

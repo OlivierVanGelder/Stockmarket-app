@@ -10,7 +10,7 @@ namespace DAL.DbAccess
 
         public DbSet<Stock> Stocks { get; set; } = null!;
         public DbSet<CandlestockMinute> Candles { get; set; } = null!;
-        public DbSet<User_Stock> User_Stocks { get; set; } = null!;
+        public DbSet<UserStock> User_Stocks { get; set; } = null!;
 
         public DbStockEngine(DbContextOptions<DbStockEngine> options)
             : base(options) { }

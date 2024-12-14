@@ -129,8 +129,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseWebSockets();
-app.NewManagerUiController(builder.Configuration);
-app.NewStockController(builder.Configuration);
+app.NewManagerUiController();
+app.NewStockController();
 app.NewUserController(builder.Configuration);
 
 app.Run();

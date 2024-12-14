@@ -42,7 +42,7 @@ namespace DAL.DbAccess
             {
                 var candlestockminute = new CandlestockMinute
                 {
-                    Stock_Id = stockId,
+                    StockId = stockId,
                     Date = item.Date,
                     Close = Convert.ToInt32(item.Close * 100),
                     High = Convert.ToInt32(item.High * 100),
@@ -69,7 +69,7 @@ namespace DAL.DbAccess
 
             var candles = await _context
                 .Candles.Where(c =>
-                    c.Stock_Id == stockId && c.Date >= startDate && c.Date <= endDate
+                    c.StockId == stockId && c.Date >= startDate && c.Date <= endDate
                 )
                 .OrderBy(c => c.Date)
                 .ToListAsync();
@@ -131,7 +131,7 @@ namespace DAL.DbAccess
 
             var candles = await _context
                 .Candles.Where(c =>
-                    c.Stock_Id == stockId && c.Date >= startDate && c.Date <= endDate
+                    c.StockId == stockId && c.Date >= startDate && c.Date <= endDate
                 )
                 .OrderBy(c => c.Date)
                 .ToListAsync();
@@ -160,7 +160,7 @@ namespace DAL.DbAccess
             var allCandles = _context.Candles.ToList();
 
             var duplicateGroups = allCandles
-                .GroupBy(c => new { c.Stock_Id, c.Date })
+                .GroupBy(c => new { Stock_Id = c.StockId, c.Date })
                 .Where(g => g.Count() > 1);
 
             foreach (var group in duplicateGroups)

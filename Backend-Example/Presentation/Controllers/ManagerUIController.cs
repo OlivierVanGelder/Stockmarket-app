@@ -2,7 +2,7 @@
 {
     public static class ManagerUiController
     {
-        public static void NewManagerUiController(this WebApplication app, IConfiguration configuration)
+        public static void NewManagerUiController(this WebApplication app)
         {
             app.MapGet(
                     "/example",
