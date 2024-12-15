@@ -1,73 +1,3 @@
-# name: End-to-end tests
-
-# on: [push]
-
-# jobs:
-#     cypress-run:
-#         runs-on: ubuntu-latest
-
-#         steps:
-#             - name: Checkout code
-#               uses: actions/checkout@v3
-
-#             - name: Install .NET Core
-#               uses: actions/setup-dotnet@v4
-#               with:
-#                   dotnet-version: 8.0.x
-
-#             - name: Install pnpm
-#               run: npm install -g pnpm
-
-#             - name: Install Dependencies
-#               run: pnpm install -r
-
-#             - name: Start Backend Server
-#               env:
-#                   TESTING: 'true'
-#               run: |
-#                   # Start the backend in the background
-#                   nohup dotnet run --project ./Backend-Example/Presentation &
-
-#                   # Wait for the backend to be fully initialized
-#                   timeout=300
-#                   end=$((SECONDS+timeout))
-#                   while [ $SECONDS -lt $end ]; do
-#                     curl --insecure https://localhost:42069/swagger/index.html && break
-#                     echo "Waiting for backend to be ready..."
-#                     sleep 5
-#                   done
-
-#                   if [ $SECONDS -ge $end ]; then
-#                     echo "Backend did not start in time."
-#                     cat backend.log  # Display backend logs for debugging
-#                     exit 1
-#                   fi
-
-#             - name: Start Frontend Server
-#               working-directory: ./react-app
-#               run: |
-#                   # Start the frontend in the background
-#                   nohup pnpm start &
-
-#                   # Wait for the frontend to be fully initialized
-#                   timeout=600
-#                   end=$((SECONDS+timeout))
-#                   while [ $SECONDS -lt $end ]; do
-#                     curl http://localhost:3000 && break
-#                     echo "Waiting for frontend to be ready..."
-#                     sleep 5
-#                   done
-
-#                   if [ $SECONDS -ge $end ]; then
-#                     echo "Frontend did not start in time."
-#                     cat frontend.log  # Display frontend logs for debugging
-#                     exit 1
-#                   fi
-
-#             - name: Run Cypress Tests
-#               working-directory: ./cypress
-#               run: pnpm npx cypress run
-
 name: End-to-end tests
 
 on:
@@ -97,6 +27,15 @@ jobs:
               uses: hoverkraft-tech/compose-action@v2.0.1
               with:
                   compose-file: './docker-compose.yml'
+
+            - name: Wait for DB to be ready
+              run: |
+                  # Wait for the database to be ready using a SQL check
+                  until /opt/mssql-tools/bin/sqlcmd -S database -U sa -P "$MSSQL_SA_PASSWORD" -Q "SELECT 1" &>/dev/null; do
+                      echo "Waiting for database..."
+                      sleep 5  # Wait 5 seconds before retrying
+                  done
+                  echo "Database is ready!"
 
             - name: Run Cypress tests
               working-directory: ./cypress
