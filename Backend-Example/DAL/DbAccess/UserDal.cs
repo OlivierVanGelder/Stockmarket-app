@@ -122,7 +122,7 @@ namespace DAL.DbAccess
                 throw new ArgumentException("User or stock not found");
             }
             var userStock = _context.User_Stocks.FirstOrDefault(us =>
-                us.UserId == user.Id && us.StockId == stock.Id
+                us.User_Id == user.Id && us.StockId == stock.Id
             );
             if (userStock == null)
             {
@@ -141,13 +141,13 @@ namespace DAL.DbAccess
             }
 
             var userStock = _context.User_Stocks.FirstOrDefault(us =>
-                us.UserId == user.Id && us.StockId == stock.Id
+                us.User_Id == user.Id && us.StockId == stock.Id
             );
             if (userStock == null)
             {
-                var newUserStock = new UserStock
+                var newUserStock = new User_Stock
                 {
-                    UserId = user.Id,
+                    User_Id = user.Id,
                     StockId = stock.Id,
                     StockAmount = amount
                 };
@@ -177,13 +177,13 @@ namespace DAL.DbAccess
             }
 
             var userStock = _context.User_Stocks.FirstOrDefault(us =>
-                us.UserId == user.Id && us.StockId == stock.Id
+                us.User_Id == user.Id && us.StockId == stock.Id
             );
             if (userStock == null)
             {
-                var newUserStock = new UserStock
+                var newUserStock = new User_Stock
                 {
-                    UserId = user.Id,
+                    User_Id = user.Id,
                     StockId = stock.Id,
                     StockAmount = amount
                 };

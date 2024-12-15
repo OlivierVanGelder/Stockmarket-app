@@ -2,7 +2,7 @@
 public class CandlestockMinute
 {
     public int Id { get; set; }
-    public int StockId { get; set; }
+    public int Stock_Id { get; set; }
     public DateTime Date { get; set; }
     public int Open { get; set; }
     public int High { get; set; }

@@ -11,5 +11,5 @@ public class User : IdentityUser
     public override string SecurityStamp { get; set; } = "";
 
     public int BalanceInCents { get; set; }
-    public List<UserStock> UserStocks { get; set; } = [];
+    public List<User_Stock> UserStocks { get; set; } = [];
 }
