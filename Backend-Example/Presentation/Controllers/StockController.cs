@@ -17,7 +17,7 @@ public static class StockController
         stocks
             .MapGet(
                 "/names",
-                (IStockDAal stockDal) =>
+                (IStockDAl stockDal) =>
                 {
                     return () => CandleStock.GetStockNames(stockDal);
                 }
@@ -34,7 +34,7 @@ public static class StockController
                     double interval,
                     double start,
                     double end,
-                    IStockDAal stockDal
+                    IStockDAl stockDal
                 ) =>
                 {
                     if (ticker == "")

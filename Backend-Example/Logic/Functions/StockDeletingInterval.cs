@@ -6,10 +6,10 @@ namespace Logic.Functions
     {
         private readonly System.Timers.Timer _timer;
 
-        public StockDeletingInterval(double intervalInSeconds, IStockDAal stockDAal)
+        public StockDeletingInterval(double intervalInSeconds, IStockDAl stockDAl)
         {
             _timer = new System.Timers.Timer(intervalInSeconds * 1000);
-            _timer.Elapsed += (sender, e) => DeleteDuplicates(stockDAal);
+            _timer.Elapsed += (sender, e) => DeleteDuplicates(stockDAl);
             _timer.AutoReset = true;
             _timer.Enabled = true;
         }
@@ -19,9 +19,9 @@ namespace Logic.Functions
             _timer.Stop();
         }
 
-        private static void DeleteDuplicates(IStockDAal stockDAal)
+        private static void DeleteDuplicates(IStockDAl stockDAl)
         {
-            stockDAal.DeleteDuplicateStocks();
+            stockDAl.DeleteDuplicateStocks();
         }
     }
 }

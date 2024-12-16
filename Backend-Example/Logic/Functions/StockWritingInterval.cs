@@ -8,10 +8,10 @@ namespace Logic.Functions
     {
         private readonly System.Timers.Timer _timer;
 
-        public StockWritingInterval(double intervalInSeconds, IStockDAal stockDAal)
+        public StockWritingInterval(double intervalInSeconds, IStockDAl stockDAl)
         {
             _timer = new System.Timers.Timer(intervalInSeconds * 1000);
-            _timer.Elapsed += (sender, e) => WriteStocks(stockDAal);
+            _timer.Elapsed += (sender, e) => WriteStocks(stockDAl);
             _timer.AutoReset = false;
             _timer.Enabled = true;
         }
@@ -21,12 +21,12 @@ namespace Logic.Functions
             _timer.Stop();
         }
 
-        private static void WriteStocks(IStockDAal stockDAal)
+        private static void WriteStocks(IStockDAl stockDAl)
         {
-            var names = stockDAal.GetStockNames();
+            var names = stockDAl.GetStockNames();
             foreach (var name in names)
             {
-                var lastStockDigit = Converter.ConvertDateToDigit(stockDAal.GetLastStockDate());
+                var lastStockDigit = Converter.ConvertDateToDigit(stockDAl.GetLastStockDate());
                 var currentDateDigit = Converter.ConvertDateToDigit(
                     DateTime
                         .Now.AddSeconds(-DateTime.Now.Second)
@@ -45,8 +45,8 @@ namespace Logic.Functions
                     currentDateDigit,
                     0.00069444444
                 );
-                stockDAal.WriteStocks(newStock, name);
-                stockDAal.DeleteDuplicateStocks();
+                stockDAl.WriteStocks(newStock, name);
+                stockDAl.DeleteDuplicateStocks();
             }
         }
     }

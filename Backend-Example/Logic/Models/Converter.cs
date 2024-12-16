@@ -10,9 +10,9 @@ public static class Converter
 
     public static DateTime ConvertDigitToDate(double x)
     {
-        DateTime baseDate = new DateTime(2020, 11, 1, 12, 0, 0);
-        double totalIncrement = x;
-        DateTime currentDate = baseDate;
+        var baseDate = new DateTime(2020, 11, 1, 12, 0, 0);
+        var totalIncrement = x;
+        var currentDate = baseDate;
         currentDate = currentDate.AddDays(Math.Floor(totalIncrement));
 
         var fractionalPart = totalIncrement - Math.Floor(totalIncrement);

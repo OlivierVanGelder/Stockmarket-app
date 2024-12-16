@@ -103,7 +103,7 @@ builder.Services.Configure<IdentityOptions>(options =>
 });
 
 builder.Services.AddScoped<IUserDal, UserDal>();
-builder.Services.AddScoped<IStockDAal, StockDal>();
+builder.Services.AddScoped<IStockDAl, StockDal>();
 builder.Services.AddScoped<LineStock>();
 
 builder.Services.AddWebSockets(_ => {});
