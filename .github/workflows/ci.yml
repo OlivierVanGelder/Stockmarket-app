@@ -28,15 +28,6 @@ jobs:
               with:
                   compose-file: './docker-compose.yml'
 
-            - name: Wait for DB to be ready
-              run: |
-                  # Wait for the database to be ready using a SQL check
-                  until /opt/mssql-tools/bin/sqlcmd -S database -U sa -P "$MSSQL_SA_PASSWORD" -Q "SELECT 1" &>/dev/null; do
-                      echo "Waiting for database..."
-                      sleep 5  # Wait 5 seconds before retrying
-                  done
-                  echo "Database is ready!"
-
             - name: Run Cypress tests
               working-directory: ./cypress
               run: pnpm npx cypress run
