@@ -1,5 +1,6 @@
-describe('Loggin in', () => {
+import './register.cy';
 
+describe('Loggin in', () => {
   it('fills in the username and password, then submits the form', () => {
     cy.visit('/');
     cy.get('#root .App nav ul li')

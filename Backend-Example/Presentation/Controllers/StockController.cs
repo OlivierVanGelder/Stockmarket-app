@@ -19,7 +19,7 @@ public static class StockController
                 "/names",
                 (IStockDAl stockDal) =>
                 {
-                    return () => CandleStock.GetStockNames(stockDal);
+                    return CandleStock.GetStockNames(stockDal);
                 }
             )
             .WithName("GetStockNames")

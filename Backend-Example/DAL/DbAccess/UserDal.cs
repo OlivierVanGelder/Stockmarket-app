@@ -122,7 +122,7 @@ public class UserDal : IUserDal
             throw new ArgumentException("User or stock not found");
         }
         var userStock = _context.User_Stocks.FirstOrDefault(us =>
-            us.User_Id == user.Id && us.StockId == stock.Id
+            us.UserId == user.Id && us.StockId == stock.Id
         );
         if (userStock == null)
         {
@@ -141,13 +141,13 @@ public class UserDal : IUserDal
         }
 
         var userStock = _context.User_Stocks.FirstOrDefault(us =>
-            us.User_Id == user.Id && us.StockId == stock.Id
+            us.UserId == user.Id && us.StockId == stock.Id
         );
         if (userStock == null)
         {
             var newUserStock = new User_Stock
             {
-                User_Id = user.Id,
+                UserId = user.Id,
                 StockId = stock.Id,
                 StockAmount = amount
             };
@@ -177,13 +177,13 @@ public class UserDal : IUserDal
         }
 
         var userStock = _context.User_Stocks.FirstOrDefault(us =>
-            us.User_Id == user.Id && us.StockId == stock.Id
+            us.UserId == user.Id && us.StockId == stock.Id
         );
         if (userStock == null)
         {
             var newUserStock = new User_Stock
             {
-                User_Id = user.Id,
+                UserId = user.Id,
                 StockId = stock.Id,
                 StockAmount = amount
             };
