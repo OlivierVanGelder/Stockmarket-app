@@ -342,6 +342,7 @@ function Graphs() {
                 <div className="select-item">
                     <p className="select-label">Start Time:</p>
                     <select
+                        className="cypress-start-time-select"
                         id="start-time-select"
                         value={startTimeString}
                         onChange={e => setStartDay(e.target.value)}
@@ -377,6 +378,7 @@ function Graphs() {
                                 openPopup()
                             }}
                             size="large"
+                            className="cypress-buy-button"
                         >
                             Buy
                         </BuyButton>
@@ -395,6 +397,7 @@ function Graphs() {
                                 openPopup()
                             }}
                             size="large"
+                            className="cypress-sell-button"
                         >
                             Sell
                         </SellButton>
@@ -420,7 +423,7 @@ function Graphs() {
                 candleSelected={candleSelected}
                 setCandleSelected={setCandleSelected}
             />
-            <h2>Stock owned: {stockAmount}</h2>
+            <h2 className="cypress-stockAmount">Stock owned: {stockAmount}</h2>
             {invalidData ? (
                 <div>
                     <h1>Invalid Data</h1>
@@ -437,7 +440,10 @@ function Graphs() {
                                 margin: '35px'
                             }}
                         >
-                            <LineChart chartData={chartData.datasets} />
+                            <LineChart
+                                chartData={chartData.datasets}
+                                labels={chartData.labels}
+                            />
                         </div>
                     )}
                 </div>

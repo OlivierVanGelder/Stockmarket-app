@@ -7,8 +7,8 @@ describe('Loggin in', () => {
       .contains('Graphs')
       .click();
 
-    cy.get('input#username').type('test');
-    cy.get('input#password').type('TestingLogin');
+    cy.get('input#username').type('TestingRegister');
+    cy.get('input#password').type('TestingRegister');
 
     cy.get('form').submit();
 

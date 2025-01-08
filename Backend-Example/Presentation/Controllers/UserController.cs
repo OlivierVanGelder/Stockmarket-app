@@ -14,6 +14,29 @@ public static class UserController
     {
         var users = app.MapGroup("/users").WithTags("Users");
 
+        users.MapGet("/", async (string userId,HttpContext context,DbStockEngine dbContext, UserManager<DAL.Tables.User> userManager) =>
+        {
+            UserDal userDal = new(dbContext, userManager);
+                    
+            if (UserAuthorization(userId, context) != Results.Ok())
+            {
+                return UserAuthorization(userId, context);
+            }
+
+            var userIdFromToken = context.User.FindFirst("userId")?.Value;
+
+            if (string.IsNullOrEmpty(userIdFromToken))
+                return Results.Unauthorized();
+            
+            if (!await userDal.IsAdmin(userIdFromToken))
+            {
+                return Results.Unauthorized();
+            }
+                    
+            var users = userDal.GetAllUsers();
+            return Results.Json(users);
+        });
+        
         users.MapGet(
             "/{username}/login",
             async (
@@ -32,11 +55,18 @@ public static class UserController
                 if (!user)
                     return Results.Unauthorized();
 
+                var isAdmin = await userDal.IsAdmin(username);
+                var role = "User";
+                if (isAdmin)
+                {
+                    role = "Admin";
+                }
+                
                 var userId = await userDal.GetUserId(username);
 
                 var secretKey = configuration["Jwt:Key"] ?? "";
 
-                var token = JwtHelper.GenerateToken(username, userId, secretKey);
+                var token = JwtHelper.GenerateToken(username, userId, secretKey, role);
                 return Results.Json(new { token, userId });
             }
         );
@@ -64,7 +94,7 @@ public static class UserController
                     return Results.Conflict();
                 var userId = await userDal.GetUserId(registerRequest.Name);
                 var secretKey = configuration["Jwt:Key"];
-                var token = JwtHelper.GenerateToken(registerRequest.Name, userId, secretKey ?? "");
+                var token = JwtHelper.GenerateToken(registerRequest.Name, userId, secretKey ?? "", "User");
                 return Results.Json(new { Token = token, UserId = userId });
             }
         );
@@ -79,6 +109,8 @@ public static class UserController
                     UserManager<DAL.Tables.User> userManager
                 ) =>
                 {
+                    UserDal userDal = new(dbContext, userManager);
+                    
                     if (UserAuthorization(userId, context) != Results.Ok())
                     {
                         return UserAuthorization(userId, context);
@@ -92,7 +124,11 @@ public static class UserController
                     if (userIdFromToken != userId)
                         return Results.Forbid();
 
-                    UserDal userDal = new(dbContext, userManager);
+                    if (!await userDal.IsAdmin(userIdFromToken))
+                    {
+                        return Results.Unauthorized();
+                    }
+                    
                     var success = await userDal.DeleteUser(userId);
                     return success ? Results.Ok() : Results.Conflict();
                 }

@@ -1,7 +1,7 @@
 ﻿namespace Logic.Interfaces;
 public interface IUserDal
 {
-    string[] GetUsers();
+    string[] GetAllUsers();
     Task<bool> AddUserAsync(string name, string password);
     Task<bool> DeleteUser(string userId);
     Task<bool> VerifyUser(string name, string password);

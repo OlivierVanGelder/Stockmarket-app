@@ -11,6 +11,7 @@ public static class JwtHelper
         string username,
         string userId,
         string secretKey,
+        string role,
         int expireMinutes = 30
     )
     {
@@ -21,7 +22,7 @@ public static class JwtHelper
         {
             new Claim(JwtRegisteredClaimNames.Sub, username),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim("role", "User"),
+            new Claim("role", role),
             new Claim("userId", userId),
         };
         var token = new JwtSecurityToken(

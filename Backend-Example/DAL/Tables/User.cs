@@ -11,5 +11,6 @@ public class User : IdentityUser
     public override string? SecurityStamp { get; set; }
 
     public int BalanceInCents { get; set; }
+    public bool IsAdmin { get; set; } = false;
     public List<User_Stock> UserStocks { get; set; } = [];
 }

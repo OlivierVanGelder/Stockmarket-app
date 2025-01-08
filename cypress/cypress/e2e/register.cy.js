@@ -10,8 +10,8 @@ describe('template spec', () => {
       .contains('Register')
       .click();
 
-    cy.get('input#username').type('testingRegister');
-    cy.get('input#password').type('TestingLogin');
+    cy.get('input#username').type('TestingRegister');
+    cy.get('input#password').type('TestingRegister');
 
     cy.get('form').submit();
 

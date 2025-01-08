@@ -17,7 +17,7 @@ public class UserDal : IUserDal
         _userManager = userManager;
     }
 
-    public string[] GetUsers()
+    public string[] GetAllUsers()
     {
         var users = _context.Users;
         return users.Select(u => u.UserName ?? "").ToArray();
@@ -218,6 +218,12 @@ public class UserDal : IUserDal
     {
         var userId = (await _userManager.FindByNameAsync(name) ?? new User()).Id;
         return userId;
+    }
+    
+    public async Task<bool> IsAdmin(string name)
+    {
+        var isAdmin = (await _userManager.FindByNameAsync(name) ?? new User()).IsAdmin;
+        return isAdmin;
     }
 
     public async Task<double> GetUserBalance(string id)

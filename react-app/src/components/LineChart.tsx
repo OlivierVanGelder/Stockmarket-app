@@ -28,12 +28,16 @@ interface LineGraphItem {
         backgroundColor: string
         borderColor: string
     }[]
+    labels?: string[] // Add an optional 'labels' property
 }
 
-const LineChart: React.FC<LineGraphItem> = ({ chartData }) => {
+const LineChart: React.FC<LineGraphItem> = ({ chartData, labels }) => {
+    console.log(chartData)
     const data = {
         labels:
-            chartData[0]?.values.map((_, index) => `Label ${index + 1}`) || [],
+            chartData[0]?.values.map(
+                (_, index) => labels?.[index] || `Label ${index + 1}`
+            ) || [],
         datasets: chartData.map(item => ({
             label: item.label,
             data: item.values,
@@ -68,7 +72,7 @@ const LineChart: React.FC<LineGraphItem> = ({ chartData }) => {
                     tooltip: {
                         callbacks: {
                             label: function (context) {
-                                // Format tooltip to show 2 decimal places for points
+                                console.log(context)
                                 return `${context.dataset.label}: ${(
                                     context.raw as number
                                 ).toFixed(2)}`
