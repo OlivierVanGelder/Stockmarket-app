@@ -1,43 +1,26 @@
-public class TimedHostedService : IHostedService, IDisposable
+using System.Formats.Asn1;
+using DAL.DbAccess;
+using Logic.Functions;
+using Logic.Interfaces;
+using Microsoft.OpenApi.Writers;
+
+public class StockWritingService : BackgroundService
 {
-    private int executionCount = 0;
-    private readonly ILogger<TimedHostedService> _logger;
-    private Timer? _timer = null;
+    private IServiceProvider _serviceProvider;
 
-    public TimedHostedService(ILogger<TimedHostedService> logger)
+    public StockWritingService(IServiceProvider serviceProvider)
     {
-        _logger = logger;
+        _serviceProvider = serviceProvider;
     }
-
-    public Task StartAsync(CancellationToken stoppingToken)
+    
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Timed Hosted Service running.");
-
-        _timer = new Timer(DoWork, null, TimeSpan.Zero,
-            TimeSpan.FromSeconds(5));
-
-        return Task.CompletedTask;
-    }
-
-    private void DoWork(object? state)
-    {
-        var count = Interlocked.Increment(ref executionCount);
-
-        _logger.LogInformation(
-            "Timed Hosted Service is working. Count: {Count}", count);
-    }
-
-    public Task StopAsync(CancellationToken stoppingToken)
-    {
-        _logger.LogInformation("Timed Hosted Service is stopping.");
-
-        _timer?.Change(Timeout.Infinite, 0);
-
-        return Task.CompletedTask;
-    }
-
-    public void Dispose()
-    {
-        _timer?.Dispose();
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var stockDal = scope.ServiceProvider.GetRequiredService<IStockDal>();
+            await StockWritingInterval.WriteStocks(stockDal);
+            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+        }
     }
 }

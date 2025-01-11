@@ -1,7 +1,7 @@
 ﻿using Logic.Models;
 
 namespace Logic.Interfaces;
-public interface IStockDAl
+public interface IStockDal
 {
     string[] GetStockNames();
     void WriteStocks(CandleItem[] c, string ticker);
@@ -19,5 +19,5 @@ public interface IStockDAl
         DateTime endDate,
         TimeSpan interval
     );
-    DateTime GetLastStockDate();
+    DateTime GetLastStockDate(string stockname);
 }

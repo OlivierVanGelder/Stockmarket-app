@@ -58,7 +58,7 @@ async function fetchUserBalance(): Promise<number> {
 }
 
 function convertToDays(date: Date): number {
-    const referenceDate = new Date('2020-11-01T12:00:00Z')
+    const referenceDate = new Date('2024-11-01T12:00:00Z')
     return parseFloat(
         (
             (date.getTime() - referenceDate.getTime()) /

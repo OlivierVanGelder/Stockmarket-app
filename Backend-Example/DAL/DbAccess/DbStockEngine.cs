@@ -22,9 +22,9 @@ public class DbStockEngine : IdentityDbContext<User>
             return;
         }
 
-        var conn = Environment.GetEnvironmentVariable("ConnectionString");
+        var conn = Environment.GetEnvironmentVariable("DefaultConnection");
         optionsBuilder.UseSqlServer(
-            conn ?? @"Server=(localdb)\LOCAL;Database=StockEngine;Integrated Security=True;"
+            conn ?? @"Server=(localdb)\\TestLocalServer;Database=TestDatabase;Integrated Security=True;"
         );
     }
 }

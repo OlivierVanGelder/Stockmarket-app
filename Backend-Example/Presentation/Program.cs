@@ -2,19 +2,29 @@ using System.Text;
 using Backend_Example.Controllers;
 using Logic.Stocks;
 using DAL.DbAccess;
-using DAL.Tables;
+using Logic.Functions;
 using Logic.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebSockets;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using User = DAL.Tables.User;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var conn = Environment.GetEnvironmentVariable("ConnectionString");
 builder.Services.AddDbContext<DbStockEngine>(options =>
-    options.UseSqlServer(conn ?? builder.Configuration.GetConnectionString("DefaultConnection"))
+    options.UseSqlServer(
+        conn ?? builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlOptions =>
+        sqlOptions.CommandTimeout(60)
+            .EnableRetryOnFailure(
+            maxRetryCount: 3,        // Number of retries before failing
+            maxRetryDelay: TimeSpan.FromSeconds(10), // Delay between retries
+            errorNumbersToAdd: null  // You can specify specific SQL error numbers to retry on
+        )
+    )
 );
 
 builder.Services.AddEndpointsApiExplorer();
@@ -56,8 +66,9 @@ builder
             {
                 if (context.Exception.InnerException == null)
                 {
-                    return Task.CompletedTask; }
-                
+                    return Task.CompletedTask;
+                }
+
                 context.Response.StatusCode = 401;
                 context.Response.ContentType = "application/json";
                 var responseMessage = new { message = "Authentication failed" };
@@ -103,10 +114,12 @@ builder.Services.Configure<IdentityOptions>(options =>
 });
 
 builder.Services.AddScoped<IUserDal, UserDal>();
-builder.Services.AddScoped<IStockDAl, StockDal>();
 builder.Services.AddScoped<LineStock>();
+builder.Services.AddScoped<IStockDal, StockDal>();
 
-builder.Services.AddWebSockets(_ => {});
+builder.Services.AddHostedService<StockWritingService>();
+
+builder.Services.AddWebSockets(_ => { });
 
 var app = builder.Build();
 

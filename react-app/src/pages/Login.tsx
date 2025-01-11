@@ -60,8 +60,8 @@ const Login = () => {
 
     async function register(username: string, password: string) {
         const registerRequest = {
-            name: username,
-            password: password
+            Name: username,
+            Password: password
         }
 
         try {

@@ -10,10 +10,10 @@ public class LineStock
         DateTime startTime,
         DateTime endTime,
         TimeSpan interval,
-        IStockDAl stockDAl
+        IStockDal stockDal
     )
     {
-        var values = stockDAl.GetLineValues(
+        var values = stockDal.GetLineValues(
             stockName,
             startTime,
             endTime,

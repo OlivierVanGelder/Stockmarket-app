@@ -10,7 +10,7 @@ public class CandleStock
         double startX,
         double endX,
         double intervalDays,
-        IStockDAl stockDal
+        IStockDal stockDal
     )
     {
         var startDate = Converter.ConvertDigitToDate(startX);
@@ -101,8 +101,8 @@ public class CandleStock
         return lowValue;
     }
 
-    public static string[] GetStockNames(IStockDAl stockDAl)
+    public static string[] GetStockNames(IStockDal stockDal)
     {
-        return stockDAl.GetStockNames();
+        return stockDal.GetStockNames();
     }
 }

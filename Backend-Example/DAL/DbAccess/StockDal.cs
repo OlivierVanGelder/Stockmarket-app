@@ -1,11 +1,12 @@
-﻿using Logic.Models;
+﻿using System.Runtime.InteropServices.JavaScript;
+using Logic.Models;
 using DAL.Tables;
 using Logic.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace DAL.DbAccess
 {
-    public class StockDal : IStockDAl
+    public class StockDal : IStockDal
     {
         private readonly DbStockEngine _context;
 
@@ -15,13 +16,22 @@ namespace DAL.DbAccess
             _context = context;
         }
 
-        public DateTime GetLastStockDate()
+        public DateTime GetLastStockDate(string stockName)
         {
-            var candle = _context.Candles;
-            var dates = candle.Select(c => c.Date).AsEnumerable();
+            var stockId = _context
+                .Stocks.Where(s => s.Ticker == stockName)
+                .Select(s => s.Id)
+                .FirstOrDefault();
 
-            return dates.DefaultIfEmpty(new DateTime(2020, 11, 1, 12, 0, 0)).Max();
+            var candle = _context.Candles;
+            var dates = candle
+                .Where(c => c.Stock_Id == stockId)  // Filter by stockId
+                .Select(c => c.Date)
+                .AsEnumerable();
+
+            return dates.DefaultIfEmpty(new DateTime(2024, 11, 1, 12, 0, 0)).Max();
         }
+
 
         public string[] GetStockNames()
         {
@@ -66,16 +76,16 @@ namespace DAL.DbAccess
                 .Stocks.Where(s => s.Ticker == stockName)
                 .Select(s => s.Id)
                 .FirstOrDefaultAsync();
-
+        
             var candles = await _context
                 .Candles.Where(c =>
                     c.Stock_Id == stockId && c.Date >= startDate && c.Date <= endDate
                 )
                 .OrderBy(c => c.Date)
                 .ToListAsync();
-
+        
             var intervalTicks = interval.Ticks;
-
+        
             var groupedCandles = candles
                 .GroupBy(c => (c.Date.Ticks - startDate.Ticks) / intervalTicks)
                 .Select(candleGroup =>
@@ -87,7 +97,7 @@ namespace DAL.DbAccess
                     var volume = 0.0;
                     DateTime firstDate = DateTime.MinValue;
                     bool isFirst = true;
-
+        
                     foreach (var c in candleGroup)
                     {
                         if (isFirst)
@@ -96,13 +106,13 @@ namespace DAL.DbAccess
                             firstDate = c.Date;
                             isFirst = false;
                         }
-
+        
                         close = c.Close / 100.0;
                         high = Math.Max(high, c.High / 100.0);
                         low = Math.Min(low, c.Low / 100.0);
                         volume += c.Volume / 100.0;
                     }
-
+        
                     return new CandleItem(
                         open: open,
                         close: close,
@@ -113,35 +123,37 @@ namespace DAL.DbAccess
                     );
                 })
                 .ToArray();
-
+        
             return groupedCandles;
         }
+
 
         public async Task<LineItem[]> GetLineValues(
             string stockName,
             DateTime startDate,
             DateTime endDate,
             TimeSpan interval
-        )
+        )   
         {
             int stockId = _context
                 .Stocks.Where(s => s.Ticker == stockName)
                 .Select(s => s.Id)
                 .FirstOrDefault();
-
+            
             var candles = await _context
                 .Candles.Where(c =>
                     c.Stock_Id == stockId && c.Date >= startDate && c.Date <= endDate
                 )
                 .OrderBy(c => c.Date)
                 .ToListAsync();
-
+            
+            
             var intervalTicks = interval.Ticks;
             var filteredCandles = candles
                 .GroupBy(c => (c.Date.Ticks - startDate.Ticks) / intervalTicks)
                 .Select(g => g.First())
                 .OrderBy(c => c.Date);
-
+            
             var lines = filteredCandles
                 .Select(c => new LineItem(c.Date, c.Close / 100.00))
                 .ToArray();
@@ -151,6 +163,7 @@ namespace DAL.DbAccess
             }
             var lastCandle = candles.LastOrDefault();
             lines[^1].Value = lastCandle != null ? lastCandle.Close / 100.00 : 0;
+            //var lines = new[] { new LineItem(startDate, 0.0) };
 
             return lines;
         }

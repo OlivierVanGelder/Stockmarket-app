@@ -89,9 +89,9 @@ public static class UserController
                     registerRequest.Name,
                     registerRequest.Password
                 );
-
-                if (!newUser)
-                    return Results.Conflict();
+                
+                 if (!newUser)
+                     return Results.Conflict();
                 var userId = await userDal.GetUserId(registerRequest.Name);
                 var secretKey = configuration["Jwt:Key"];
                 var token = JwtHelper.GenerateToken(registerRequest.Name, userId, secretKey ?? "", "User");

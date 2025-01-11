@@ -10,7 +10,7 @@ public static class Converter
 
     public static DateTime ConvertDigitToDate(double x)
     {
-        var baseDate = new DateTime(2020, 11, 1, 12, 0, 0);
+        var baseDate = new DateTime(2024, 11, 1, 12, 0, 0);
         var totalIncrement = x;
         var currentDate = baseDate;
         currentDate = currentDate.AddDays(Math.Floor(totalIncrement));
@@ -26,9 +26,10 @@ public static class Converter
         return currentDate;
     }
 
+
     public static double ConvertDateToDigit(DateTime dateTime)
     {
-        var baseDate = new DateTime(2020, 11, 1, 12, 0, 0);
+        var baseDate = new DateTime(2024, 11, 1, 12, 0, 0);
 
         var timeDifference = dateTime - baseDate;
         var totalDays = timeDifference.TotalDays;
