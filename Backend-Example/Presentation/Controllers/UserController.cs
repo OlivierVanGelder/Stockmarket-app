@@ -196,6 +196,32 @@ public static class UserController
             .RequireAuthorization();
 
         users
+            .MapGet(
+                "/{id}/stock",
+                async (
+                    string id,
+                    HttpContext context,
+                    DbStockEngine dbContext,
+                    UserManager<DAL.Tables.User> userManager
+                ) =>
+                {
+                    if (UserAuthorization(id, context) != Results.Ok())
+                    {
+                        return UserAuthorization(id, context);
+                    }
+
+                    if (id == "")
+                        return Results.BadRequest();
+
+                    UserDal userDal = new(dbContext, userManager);
+                    var stocksAmounts = await User.GetUserStocks(userDal, id);
+
+                    return Results.Json(new { stocksAmounts });
+                }
+            )
+            .RequireAuthorization();
+        
+        users
             .MapPut(
                 "/{id}/stock",
                 async (

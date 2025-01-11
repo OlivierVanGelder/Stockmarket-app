@@ -79,6 +79,7 @@ const registerForm: React.FC<RegisterFormProps> = ({
             style={{
                 maxWidth: '400px',
                 margin: '2rem auto',
+                marginBottom: '1rem',
                 padding: '2rem',
                 border: '1px solid #ddd',
                 borderRadius: '10px',
@@ -111,6 +112,16 @@ const registerForm: React.FC<RegisterFormProps> = ({
                     onChange={e => setPassword(e.target.value)}
                     required
                 />
+                <div>
+                    <p
+                        style={{
+                            color: '#5f6061'
+                        }}
+                    >
+                        *Minimal 10 characters and one uppercase letter
+                    </p>
+                    <p style={{ color: '#fa2f3d' }}>*No spaces allowed</p>
+                </div>
                 <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
                     <Button text="Register" type="submit" />
                 </div>

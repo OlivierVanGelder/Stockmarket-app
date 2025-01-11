@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using DAL.Tables;
 using Logic.Interfaces;
+using Logic.Models;
 using Microsoft.AspNetCore.Identity;
 
 namespace DAL.DbAccess;
@@ -113,9 +114,9 @@ public class UserDal : IUserDal
     }
 
     /// <exception cref="ArgumentException"></exception>
-    public async Task<double> GetUserStockAmount(string id, string ticker)
+    public async Task<double> GetUserStockAmount(string userId, string ticker)
     {
-        var user = await _userManager.FindByIdAsync(id);
+        var user = await _userManager.FindByIdAsync(userId);
         var stock = _context.Stocks.FirstOrDefault(s => s.Ticker == ticker);
         if (user == null || stock == null)
         {
@@ -130,6 +131,22 @@ public class UserDal : IUserDal
         }
         return userStock.StockAmount;
     }
+
+    public async Task<StockAmount[]> GetUserStocks(string userId)
+    {
+        var stocks = _context.User_Stocks.Where(us => us.UserId == userId);
+        List<StockAmount> allUserStockAmounts = new List<StockAmount>();
+
+        foreach (var s in stocks)
+        {
+            var stock = await _context.Stocks.FindAsync(s.StockId);
+            StockAmount stockAmount = new StockAmount(stock.Ticker, s.StockAmount);
+            allUserStockAmounts.Add(stockAmount);
+        }
+
+        return allUserStockAmounts.ToArray();
+    }
+
 
     public async Task<bool> BuyUserStock(string id, string ticker, int amount, double price)
     {

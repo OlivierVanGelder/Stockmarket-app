@@ -1,9 +1,15 @@
 ﻿using Logic.Interfaces;
+using Logic.Models;
 
 namespace Logic.Functions
 {
     public static class User
     {
+        public static async Task<StockAmount[]> GetUserStocks(IUserDal userDal, string userId)
+        {
+            return await userDal.GetUserStocks(userId);
+        }
+        
         public static async Task<string> GetUserName(IUserDal userDal, string userId)
         {
             return await userDal.GetUserName(userId);

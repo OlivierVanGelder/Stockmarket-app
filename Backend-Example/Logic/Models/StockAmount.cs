@@ -1,11 +1,11 @@
 namespace Logic.Models;
 
-public class StockAmounts
+public class StockAmount
 {
     public string Name { get; set; }
     public double Value { get; set; } = 0;
 
-    public StockAmounts(string name, double value)
+    public StockAmount(string name, double value)
     {
         Name = name;
         Value = value;
