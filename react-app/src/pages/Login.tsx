@@ -4,6 +4,7 @@ import LoginForm from '../components/LoginForm'
 import RegisterForm from '../components/RegisterForm'
 import ToggleButtonNotEmpty from '../components/ToggleButton'
 import { Button } from '@mui/material'
+import { Navigate, redirect, useNavigate } from 'react-router-dom'
 
 const Login = () => {
     // Local state for storing username and password
@@ -24,6 +25,12 @@ const Login = () => {
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault()
         await register(username, password)
+    }
+
+    const navigate = useNavigate()
+    const navigateToGraphs = async () => {
+        // Your login logic here
+        navigate('/graphs') // Navigate after login
     }
 
     async function login(username: string, password: string) {
@@ -50,6 +57,7 @@ const Login = () => {
             sessionStorage.setItem('userId', userId)
             sessionStorage.setItem('token', token)
             setMessage({ message: 'Login successful', color: 'green' })
+            navigateToGraphs()
         } catch (error) {
             setMessage({
                 message: `Error during logging in: ${error}`,
@@ -85,6 +93,7 @@ const Login = () => {
             sessionStorage.setItem('userId', userId)
             sessionStorage.setItem('token', token)
             setMessage({ message: 'Register successful', color: 'green' })
+            navigateToGraphs()
         } catch (error) {
             setMessage({
                 message: `Error during register: ${error}`,
