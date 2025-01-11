@@ -405,7 +405,7 @@ function Graphs() {
                 </div>
                 <div className="select-item-last">
                     <p className="select-label">
-                        Balance: {userBalance.toFixed(2)}
+                        Balance: ${userBalance.toFixed(2)}
                     </p>
                 </div>
             </div>

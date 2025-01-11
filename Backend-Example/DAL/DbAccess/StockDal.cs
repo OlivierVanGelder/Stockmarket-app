@@ -76,16 +76,16 @@ namespace DAL.DbAccess
                 .Stocks.Where(s => s.Ticker == stockName)
                 .Select(s => s.Id)
                 .FirstOrDefaultAsync();
-        
+
             var candles = await _context
                 .Candles.Where(c =>
                     c.Stock_Id == stockId && c.Date >= startDate && c.Date <= endDate
                 )
                 .OrderBy(c => c.Date)
                 .ToListAsync();
-        
+
             var intervalTicks = interval.Ticks;
-        
+
             var groupedCandles = candles
                 .GroupBy(c => (c.Date.Ticks - startDate.Ticks) / intervalTicks)
                 .Select(candleGroup =>
@@ -97,22 +97,22 @@ namespace DAL.DbAccess
                     var volume = 0.0;
                     DateTime firstDate = DateTime.MinValue;
                     bool isFirst = true;
-        
+
                     foreach (var c in candleGroup)
                     {
                         if (isFirst)
                         {
                             open = c.Open / 100.0;
-                            firstDate = c.Date;
+                            firstDate = c.Date.AddHours(1);
                             isFirst = false;
                         }
-        
+
                         close = c.Close / 100.0;
                         high = Math.Max(high, c.High / 100.0);
                         low = Math.Min(low, c.Low / 100.0);
                         volume += c.Volume / 100.0;
                     }
-        
+
                     return new CandleItem(
                         open: open,
                         close: close,
@@ -123,7 +123,7 @@ namespace DAL.DbAccess
                     );
                 })
                 .ToArray();
-        
+
             return groupedCandles;
         }
 
@@ -133,29 +133,29 @@ namespace DAL.DbAccess
             DateTime startDate,
             DateTime endDate,
             TimeSpan interval
-        )   
+        )
         {
             int stockId = _context
                 .Stocks.Where(s => s.Ticker == stockName)
                 .Select(s => s.Id)
                 .FirstOrDefault();
-            
+
             var candles = await _context
                 .Candles.Where(c =>
                     c.Stock_Id == stockId && c.Date >= startDate && c.Date <= endDate
                 )
                 .OrderBy(c => c.Date)
                 .ToListAsync();
-            
-            
+
+
             var intervalTicks = interval.Ticks;
             var filteredCandles = candles
                 .GroupBy(c => (c.Date.Ticks - startDate.Ticks) / intervalTicks)
                 .Select(g => g.First())
                 .OrderBy(c => c.Date);
-            
+
             var lines = filteredCandles
-                .Select(c => new LineItem(c.Date, c.Close / 100.00))
+                .Select(c => new LineItem(c.Date.AddHours(1), c.Close / 100.00))
                 .ToArray();
             if (lines.Length == 0)
             {
@@ -163,7 +163,6 @@ namespace DAL.DbAccess
             }
             var lastCandle = candles.LastOrDefault();
             lines[^1].Value = lastCandle != null ? lastCandle.Close / 100.00 : 0;
-            //var lines = new[] { new LineItem(startDate, 0.0) };
 
             return lines;
         }
