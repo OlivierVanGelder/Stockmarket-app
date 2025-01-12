@@ -134,13 +134,16 @@ public class UserDal : IUserDal
 
     public async Task<StockAmount[]> GetUserStocks(string userId)
     {
-        var stocks = _context.User_Stocks.Where(us => us.UserId == userId);
+        var allStocks = _context.Stocks.ToList();
         List<StockAmount> allUserStockAmounts = new List<StockAmount>();
 
-        foreach (var s in stocks)
+        foreach (var stock in allStocks)
         {
-            var stock = await _context.Stocks.FindAsync(s.StockId);
-            StockAmount stockAmount = new StockAmount(stock.Ticker, s.StockAmount);
+            var stockDal = new StockDal(_context);
+            var userStock = _context.User_Stocks.FirstOrDefault(us => us.UserId == userId && us.StockId == stock.Id);
+            var price = await stockDal.GetStockPrice(stock.Ticker);
+            var stockAmountValue = userStock != null ? userStock.StockAmount : 0;
+            StockAmount stockAmount = new StockAmount(stock.Ticker, stockAmountValue, price);
             allUserStockAmounts.Add(stockAmount);
         }
 
@@ -218,7 +221,7 @@ public class UserDal : IUserDal
         var newBalance = oldBalance + price * amount;
         await UpdateUserBalance(id, newBalance);
 
-       await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync();
         return true;
     }
 
@@ -236,7 +239,7 @@ public class UserDal : IUserDal
         var userId = (await _userManager.FindByNameAsync(name) ?? new User()).Id;
         return userId;
     }
-    
+
     public async Task<bool> IsAdmin(string name)
     {
         var isAdmin = (await _userManager.FindByNameAsync(name) ?? new User()).IsAdmin;

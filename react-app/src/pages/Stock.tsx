@@ -5,6 +5,8 @@ import ListItem from '@mui/material/ListItem'
 interface StockAmount {
     name: string
     value: number
+    price: number
+    totalValue: number
 }
 
 async function fetchUserStocks(): Promise<StockAmount[]> {
@@ -25,7 +27,9 @@ async function fetchUserStocks(): Promise<StockAmount[]> {
         const data = await response.json()
         return data.stocksAmounts.map((item: any) => ({
             name: item.name,
-            value: item.value
+            value: item.value,
+            price: item.price,
+            totalValue: item.totalValue
         }))
     } catch (error: any) {
         console.error('Error fetching user stock:', error.message)
@@ -61,21 +65,97 @@ const Stock = () => {
 
     return (
         <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-            <List
-                sx={{
+            <h2>Your Stocks</h2>
+            <table
+                style={{
                     width: '100%',
-                    maxWidth: 360,
-                    bgcolor: 'background.paper'
+                    borderCollapse: 'collapse',
+                    marginTop: '20px'
                 }}
             >
-                {stocks.map((stock, index) => (
-                    <ListItem key={index} disableGutters>
-                        <h3 style={{ fontWeight: 'bold', margin: 0 }}>
-                            {stock.name}:{stock.value.toFixed(2)}
-                        </h3>
-                    </ListItem>
-                ))}
-            </List>
+                <thead>
+                    <tr
+                        style={{
+                            backgroundColor: '#f4f4f4',
+                            textAlign: 'left'
+                        }}
+                    >
+                        <th
+                            style={{
+                                padding: '10px',
+                                border: '1px solid #ddd'
+                            }}
+                        >
+                            Ticker
+                        </th>
+                        <th
+                            style={{
+                                padding: '10px',
+                                border: '1px solid #ddd'
+                            }}
+                        >
+                            Stock Amount
+                        </th>
+                        <th
+                            style={{
+                                padding: '10px',
+                                border: '1px solid #ddd'
+                            }}
+                        >
+                            Price
+                        </th>
+                        <th
+                            style={{
+                                padding: '10px',
+                                border: '1px solid #ddd'
+                            }}
+                        >
+                            Total Value
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {stocks.map(stock => (
+                        <tr
+                            key={stock.name}
+                            style={{ borderBottom: '1px solid #ddd' }}
+                        >
+                            <td
+                                style={{
+                                    padding: '10px',
+                                    border: '1px solid #ddd'
+                                }}
+                            >
+                                {stock.name}
+                            </td>
+                            <td
+                                style={{
+                                    padding: '10px',
+                                    border: '1px solid #ddd'
+                                }}
+                            >
+                                {stock.value}
+                            </td>
+                            <td
+                                style={{
+                                    padding: '10px',
+                                    border: '1px solid #ddd'
+                                }}
+                            >
+                                ${stock.price.toFixed(2)}
+                            </td>
+                            <td
+                                style={{
+                                    padding: '10px',
+                                    border: '1px solid #ddd'
+                                }}
+                            >
+                                ${stock.totalValue.toFixed(2)}
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
         </div>
     )
 }

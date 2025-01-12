@@ -127,6 +127,20 @@ namespace DAL.DbAccess
             return groupedCandles;
         }
 
+        public async Task<double> GetStockPrice(string stockName)
+        {
+            var stockId = await _context
+                .Stocks.Where(s => s.Ticker == stockName)
+                .Select(s => s.Id)
+                .FirstOrDefaultAsync();
+
+            var lastCandle = await _context
+                .Candles.Where(c => c.Stock_Id == stockId)
+                .OrderByDescending(c => c.Date)
+                .FirstOrDefaultAsync();
+
+            return lastCandle != null ? lastCandle.Close / 100.0 : 0;
+        }
 
         public async Task<LineItem[]> GetLineValues(
             string stockName,
