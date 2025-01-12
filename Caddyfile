@@ -11,3 +11,7 @@ http://api.localhost {
 http://localhost {
 	reverse_proxy localhost:3000
 }
+
+http://admin.localhost {
+	reverse_proxy localhost:3010
+}
