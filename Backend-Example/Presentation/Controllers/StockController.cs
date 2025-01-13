@@ -14,74 +14,66 @@ public static class StockController
     {
         var stocks = app.MapGroup("/stocks").WithTags("Stocks");
 
-        stocks
-            .MapGet(
-                "/names",
-                (IStockDal stockDal) =>
+        stocks.MapGet("/names", (IStockDal stockDal) =>
+        {
+            return CandleStock.GetStockNames(stockDal);
+        })
+        .WithName("GetStockNames")
+        .WithOpenApi();
+
+        stocks.MapGet("/{ticker}",
+            async (
+                string ticker,
+                string type,
+                double interval,
+                double start,
+                double end,
+                IStockDal stockDal
+            ) =>
+            {
+                if (ticker == "")
                 {
-                    return CandleStock.GetStockNames(stockDal);
+                    return null;
                 }
-            )
-            .WithName("GetStockNames")
-            .WithOpenApi();
 
-        stocks
-            .MapGet(
-                "/{ticker}",
-                async (
-                    string ticker,
-                    string type,
-                    double interval,
-                    double start,
-                    double end,
-                    IStockDal stockDal
-                ) =>
+                switch (type)
                 {
-                    if (ticker == "")
+                    case "line":
                     {
-                        return null;
-                    }
+                        var startDate = Converter.ConvertDigitToDate(start);
+                        var endDate = Converter.ConvertDigitToDate(end);
+                        var intervalSpan = TimeSpan.FromDays(interval);
 
-                    switch (type)
+                        var results = await LineStock.GetValues(
+                            ticker,
+                            startDate,
+                            endDate,
+                            intervalSpan,
+                            stockDal
+                        );
+
+                        return Results.Json(results);
+                    }
+                    case "Candle":
                     {
-                        case "line":
-                        {
-                            var startDate = Converter.ConvertDigitToDate(start);
-                            var endDate = Converter.ConvertDigitToDate(end);
-                            var intervalSpan = TimeSpan.FromDays(interval);
+                        var results = await CandleStock.GetCandleValues(
+                            ticker,
+                            start,
+                            end,
+                            interval,
+                            stockDal
+                        );
 
-                            var results = await LineStock.GetValues(
-                                ticker,
-                                startDate,
-                                endDate,
-                                intervalSpan,
-                                stockDal
-                            );
-
-                            return Results.Json(results);
-                        }
-                        case "Candle":
-                        {
-                            var results = await CandleStock.GetCandleValues(
-                                ticker,
-                                start,
-                                end,
-                                interval,
-                                stockDal
-                            );
-
-                            return Results.Json(results);
-                        }
-                        default: return null;
+                        return Results.Json(results);
                     }
+                    default: return null;
                 }
-            )
-            .WithName("GetStockFromTicker")
-            .WithOpenApi();
+            }
+        )
+        .WithName("GetStockFromTicker")
+        .WithOpenApi();
 
-        stocks
-            .Map(
-                "/StockWS",
+        stocks.Map("/StockWS",
                 async (HttpContext context, DbStockEngine dbContext) =>
                 {
                     if (!context.WebSockets.IsWebSocketRequest)

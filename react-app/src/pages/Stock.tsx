@@ -1,12 +1,32 @@
 import React, { useEffect, useState } from 'react'
-import List from '@mui/material/List'
-import ListItem from '@mui/material/ListItem'
+import '../App.css'
 
 interface StockAmount {
     name: string
     value: number
     price: number
     totalValue: number
+}
+
+async function fetchUserBalance(): Promise<number> {
+    try {
+        const userId = sessionStorage.getItem('userId')
+        const response = await fetch(
+            `http://api.localhost/users/${userId}/balance`,
+            {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem('token')}`
+                }
+            }
+        )
+        if (!response.ok) throw new Error('Failed to fetch user balance')
+        const data = await response.json()
+        return await data.userBalance
+    } catch (error) {
+        console.error('Error fetching user balance:', error)
+        return 0
+    }
 }
 
 async function fetchUserStocks(): Promise<StockAmount[]> {
@@ -38,6 +58,7 @@ async function fetchUserStocks(): Promise<StockAmount[]> {
 }
 
 const Stock = () => {
+    const [userBalance, setUserBalance] = useState<number>(0)
     const [stocks, setStocks] = useState<StockAmount[]>([])
     const [loading, setLoading] = useState(true)
 
@@ -57,6 +78,7 @@ const Stock = () => {
         }
 
         getStocks()
+        fetchUserBalance().then(balance => setUserBalance(balance))
     }, [])
 
     if (loading) {
@@ -64,13 +86,29 @@ const Stock = () => {
     }
 
     return (
-        <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
+        <div
+            style={{
+                paddingLeft: '10px',
+                paddingRight: '10px',
+                fontFamily: 'Arial, sans-serif'
+            }}
+        >
+            <div className="select-group">
+                <div className="select-item-last">
+                    <p className="select-label">
+                        Balance: ${userBalance.toFixed(2)}
+                    </p>
+                </div>
+            </div>
             <h2>Your Stocks</h2>
             <table
                 style={{
+                    maxWidth: '800px',
                     width: '100%',
                     borderCollapse: 'collapse',
-                    marginTop: '20px'
+                    marginTop: '20px',
+                    marginLeft: 'auto',
+                    marginRight: 'auto'
                 }}
             >
                 <thead>
@@ -110,7 +148,13 @@ const Stock = () => {
                                 border: '1px solid #ddd'
                             }}
                         >
-                            Total Value
+                            Total Value: $
+                            {stocks
+                                .reduce(
+                                    (acc, stock) => acc + stock.totalValue,
+                                    0
+                                )
+                                .toFixed(2)}
                         </th>
                     </tr>
                 </thead>
