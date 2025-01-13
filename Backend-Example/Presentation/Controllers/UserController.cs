@@ -33,7 +33,7 @@ public static class UserController
                 return Results.Unauthorized();
             }
                     
-            var users = userDal.GetAllUsers();
+            var users = await userDal.GetAllUsers();
             return Results.Json(users);
         });
         
@@ -104,6 +104,7 @@ public static class UserController
                 "/{userId}",
                 async (
                     string userId,
+                    string adminId,
                     HttpContext context,
                     DbStockEngine dbContext,
                     UserManager<DAL.Tables.User> userManager
@@ -111,9 +112,9 @@ public static class UserController
                 {
                     UserDal userDal = new(dbContext, userManager);
                     
-                    if (UserAuthorization(userId, context) != Results.Ok())
+                    if (UserAuthorization(adminId, context) != Results.Ok())
                     {
-                        return UserAuthorization(userId, context);
+                        return UserAuthorization(adminId, context);
                     }
 
                     var userIdFromToken = context.User.FindFirst("userId")?.Value;
@@ -121,7 +122,7 @@ public static class UserController
                     if (string.IsNullOrEmpty(userIdFromToken))
                         return Results.Unauthorized();
 
-                    if (userIdFromToken != userId)
+                    if (userIdFromToken != adminId)
                         return Results.Forbid();
 
                     if (!await userDal.IsAdmin(userIdFromToken))

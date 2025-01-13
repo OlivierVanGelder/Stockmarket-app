@@ -4,7 +4,7 @@ namespace Logic.Interfaces;
 public interface IUserDal
 {
     Task<StockAmount[]> GetUserStocks(string userId);
-    string[] GetAllUsers();
+    Task<UserModel[]> GetAllUsers();
     Task<bool> AddUserAsync(string name, string password);
     Task<bool> DeleteUser(string userId);
     Task<bool> VerifyUser(string name, string password);

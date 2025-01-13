@@ -24,7 +24,8 @@ public class Formula
                 + Math.Cos(13200 * x) * (0.015165 + lD / 69)
                 + Math.Cos(8200 * x) * (0.0461644 + lD / 93)
                 + Math.Cos((620 + mS * 20) * x) * 0.01134
-                + Math.Cos((260 + lD * 50) * x) * 0.09456;
+                + Math.Cos((260 + lD * 50) * x) * 0.09456
+                + (0.25 + (mS % 2 == 0 ? -1 : 1 * mS * lD / 200) + lD / 10) * Math.Sin( 2 * Math.PI * (1 / ((10 + (mS / 100) * (120 - 10)) * 0.0006944444444)) * x );
             /*Multiple waves a day*/
             var term4 =
                 Math.Sin(1.0 / ((mS + 1) / 42) * x * 1.4)

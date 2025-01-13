@@ -5,17 +5,12 @@ describe('Buys and sells stock', () => {
     .contains('Graphs')
     .click();
     
-    cy.get('input#username').type('test');
-    cy.get('input#password').type('TestingLogin');
+    cy.get('input#username').type('CypressTest');
+    cy.get('input#password').type('CypressTest');
     cy.get('form').submit();
-
-    cy.wait(600);
-    cy.get('#root .App nav ul li')
-    .contains('Graphs')
-    .click();
     cy.wait(1000);
-    cy.get('select.cypress-start-time-select').select('year');
-    cy.wait(7000);
+    cy.get('select.cypress-start-time-select').select('hour');
+    cy.wait(3000);
     let stockAmount;
 
     cy.get('h2.cypress-stockAmount')

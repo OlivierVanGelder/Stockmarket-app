@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { Button } from '@mui/material'
 
 interface User {
     id: string
@@ -6,24 +7,29 @@ interface User {
     balance: number
 }
 
-async function fetchUserBalance(): Promise<number> {
+async function deleteUser(userId: string): Promise<boolean> {
     try {
-        const userId = sessionStorage.getItem('userId')
+        const adminId = sessionStorage.getItem('userId')
+
         const response = await fetch(
-            `http://api.localhost/users/${userId}/balance`,
+            `http://api.localhost/users/${userId}?adminId=${adminId}`,
             {
-                method: 'GET',
+                method: 'DELETE',
                 headers: {
                     Authorization: `Bearer ${sessionStorage.getItem('token')}`
                 }
             }
         )
-        if (!response.ok) throw new Error('Failed to fetch user balance')
-        const data = await response.json()
-        return await data.userBalance
+
+        if (!response.ok) {
+            return false
+        }
+
+        fetchAllUsers()
+        return true
     } catch (error) {
-        console.error('Error fetching user balance:', error)
-        return 0
+        console.error('Error deleting user:', error)
+        return false
     }
 }
 
@@ -47,7 +53,7 @@ async function fetchAllUsers(): Promise<User[]> {
         return data.map((item: User) => ({
             id: item.id,
             userName: item.userName,
-            balance: item.balance
+            balance: item.balance / 100
         }))
     } catch (error) {
         console.error('Error fetching users:', error)
@@ -60,7 +66,6 @@ const Home = () => {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        fetchUserBalance()
         const getUsers = async () => {
             try {
                 const fetchedStocks = await fetchAllUsers()
@@ -123,6 +128,12 @@ const Home = () => {
                         >
                             Balance
                         </th>
+                        <th
+                            style={{
+                                padding: '10px',
+                                border: '1px solid #ddd'
+                            }}
+                        ></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -131,6 +142,14 @@ const Home = () => {
                             key={user.id}
                             style={{ borderBottom: '1px solid #ddd' }}
                         >
+                            <td
+                                style={{
+                                    padding: '10px',
+                                    border: '1px solid #ddd'
+                                }}
+                            >
+                                {user.id}
+                            </td>
                             <td
                                 style={{
                                     padding: '10px',
@@ -146,6 +165,22 @@ const Home = () => {
                                 }}
                             >
                                 ${user.balance.toFixed(2)}
+                            </td>
+                            <td
+                                style={{
+                                    padding: '10px',
+                                    border: '1px solid #ddd'
+                                }}
+                            >
+                                <Button
+                                    variant="outlined"
+                                    color="error"
+                                    onClick={() => {
+                                        deleteUser(user.id)
+                                    }}
+                                >
+                                    Delete
+                                </Button>
                             </td>
                         </tr>
                     ))}

@@ -102,7 +102,7 @@ const Stock = () => {
                                 border: '1px solid #ddd'
                             }}
                         >
-                            Price
+                            Current price
                         </th>
                         <th
                             style={{

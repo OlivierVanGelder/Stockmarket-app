@@ -18,11 +18,37 @@ public class UserDal : IUserDal
         _userManager = userManager;
     }
 
-    public string[] GetAllUsers()
+    public async Task<UserModel[]> GetAllUsers()
     {
-        var users = _context.Users;
-        return users.Select(u => u.UserName ?? "").ToArray();
+        var users = _context.Users.ToList();
+        List<UserModel> userModels = new List<UserModel>();
+
+        foreach (var user in users)
+        {
+            // Fetch the user balance
+            double balance = await GetUserBalance(user.Id);
+
+            // Fetch the total stock value for the user
+            double totalStockValue = 0;
+            var userStocks = await GetUserStocks(user.Id);
+
+            // Sum up the value of each stock the user holds
+            foreach (var stockAmount in userStocks)
+            {
+                totalStockValue += stockAmount.TotalValue;
+            }
+
+            // Calculate total balance (balance in cents + stock value)
+            double totalBalance = balance + totalStockValue;
+
+            // Create a new UserModel and add to the list
+            var userModel = new UserModel(user.Id, user.UserName, (int)(totalBalance * 100)); // Store balance in cents
+            userModels.Add(userModel);
+        }
+
+        return userModels.ToArray();
     }
+
 
     public async Task<bool> AddUserAsync(string name, string password)
     {
@@ -240,9 +266,9 @@ public class UserDal : IUserDal
         return userId;
     }
 
-    public async Task<bool> IsAdmin(string name)
+    public async Task<bool> IsAdmin(string id)
     {
-        var isAdmin = (await _userManager.FindByNameAsync(name) ?? new User()).IsAdmin;
+        var isAdmin = (await _userManager.FindByIdAsync(id) ?? new User()).IsAdmin;
         return isAdmin;
     }
 
