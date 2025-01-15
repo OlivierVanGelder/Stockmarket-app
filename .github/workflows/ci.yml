@@ -28,6 +28,12 @@ jobs:
               with:
                   compose-file: './docker-compose.yml'
 
+            - name: Install wait-on
+              run: pnpm install -g wait-on
+
+            - name: Wait for services
+              run: wait-on http://localhost
+
             - name: Run Cypress tests
               working-directory: ./cypress
               run: pnpm npx cypress run
