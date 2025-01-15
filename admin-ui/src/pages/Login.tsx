@@ -102,74 +102,29 @@ const Login = () => {
     }
 
     return (
-        <div>
-            {loginSelected ? (
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center'
-                    }}
-                >
-                    <LoginForm
-                        username={username}
-                        password={password}
-                        setUsername={setUsername}
-                        setPassword={setPassword}
-                        handleLogin={handleLogin}
-                        errorMessage={errorMessage}
-                        loginMessage={message}
-                    />
-                    <div
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px'
-                        }}
-                    >
-                        <h4>Don't have an account?</h4>
-                        <Button
-                            style={{ marginTop: '5px' }}
-                            onClick={() => setloginSelected(!loginSelected)}
-                        >
-                            Register
-                        </Button>
-                    </div>
-                </div>
-            ) : (
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center'
-                    }}
-                >
-                    <RegisterForm
-                        username={username}
-                        password={password}
-                        setUsername={setUsername}
-                        setPassword={setPassword}
-                        handleRegister={handleRegister}
-                        errorMessage={errorMessage}
-                        registerMessage={message}
-                    />
-                    <div
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px'
-                        }}
-                    >
-                        <h4>Already have an account?</h4>
-                        <Button
-                            style={{ marginTop: '5px' }}
-                            onClick={() => setloginSelected(!loginSelected)}
-                        >
-                            Login
-                        </Button>
-                    </div>
-                </div>
-            )}
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center'
+            }}
+        >
+            <LoginForm
+                username={username}
+                password={password}
+                setUsername={setUsername}
+                setPassword={setPassword}
+                handleLogin={handleLogin}
+                errorMessage={errorMessage}
+                loginMessage={message}
+            />
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                }}
+            ></div>
         </div>
     )
 }

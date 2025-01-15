@@ -10,6 +10,7 @@ public interface IUserDal
     Task<bool> VerifyUser(string name, string password);
     Task<bool> VerifyNewUser(string name);
     Task<string> GetUserId(string name);
+    Task<bool> IsAdmin(string userId);
     Task<double> GetUserBalance(string userId);
     Task<string> GetUserName(string userId);
     Task<bool> SellUserStock(string id, string ticker, int amount, double price);

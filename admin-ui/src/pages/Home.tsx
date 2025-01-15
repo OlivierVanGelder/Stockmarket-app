@@ -12,7 +12,7 @@ async function deleteUser(userId: string): Promise<boolean> {
         const adminId = sessionStorage.getItem('userId')
 
         const response = await fetch(
-            `http://api.localhost/users/${userId}?adminId=${adminId}`,
+            `http://api.localhost/users/${userId}/admin?adminId=${adminId}`,
             {
                 method: 'DELETE',
                 headers: {

@@ -28,12 +28,12 @@ public static class UserController
             if (string.IsNullOrEmpty(userIdFromToken))
                 return Results.Unauthorized();
             
-            if (!await userDal.IsAdmin(userIdFromToken))
+            if (!await User.IsAdmin(userDal,userIdFromToken))
             {
                 return Results.Unauthorized();
             }
-                    
-            var users = await userDal.GetAllUsers();
+
+            var users = await User.GetAllUsers(userDal);
             return Results.Json(users);
         });
         
@@ -50,19 +50,19 @@ public static class UserController
                     return Results.BadRequest();
 
                 UserDal userDal = new(dbContext, userManager);
-                var user = await userDal.VerifyUser(username, password);
+                var user = await User.VerifyUser(userDal,username, password);
 
                 if (!user)
                     return Results.Unauthorized();
 
-                var isAdmin = await userDal.IsAdmin(username);
+                var isAdmin = await User.IsAdmin(userDal,username);
                 var role = "User";
                 if (isAdmin)
                 {
                     role = "Admin";
                 }
                 
-                var userId = await userDal.GetUserId(username);
+                var userId = await User.GetUserId(userDal, username);
 
                 var secretKey = configuration["Jwt:Key"] ?? "";
 
@@ -92,7 +92,7 @@ public static class UserController
                 
                  if (!newUser)
                      return Results.Conflict();
-                var userId = await userDal.GetUserId(registerRequest.Name);
+                var userId = await User.GetUserId(userDal,registerRequest.Name);
                 var secretKey = configuration["Jwt:Key"];
                 var token = JwtHelper.GenerateToken(registerRequest.Name, userId, secretKey ?? "", "User");
                 return Results.Json(new { Token = token, UserId = userId });
@@ -101,7 +101,7 @@ public static class UserController
 
         users
             .MapDelete(
-                "/{userId}",
+                "/{userId}/admin",
                 async (
                     string userId,
                     string adminId,
@@ -125,12 +125,38 @@ public static class UserController
                     if (userIdFromToken != adminId)
                         return Results.Forbid();
 
-                    if (!await userDal.IsAdmin(userIdFromToken))
+                    if (!await User.IsAdmin(userDal,userIdFromToken))
                     {
                         return Results.Unauthorized();
                     }
                     
-                    var success = await userDal.DeleteUser(userId);
+                    var success = await User.DeleteUser(userDal,userId);
+                    return success ? Results.Ok() : Results.Conflict();
+                }
+            )
+            .RequireAuthorization();
+        
+        users
+            .MapDelete(
+                "/{userId}",
+                async (
+                    string userId,
+                    HttpContext context,
+                    DbStockEngine dbContext,
+                    UserManager<DAL.Tables.User> userManager
+                ) =>
+                {
+                    UserDal userDal = new(dbContext, userManager);
+
+                    var userIdFromToken = context.User.FindFirst("userId")?.Value;
+
+                    if (string.IsNullOrEmpty(userIdFromToken))
+                        return Results.Unauthorized();
+
+                    if (userIdFromToken != userId)
+                        return Results.Forbid();
+                    
+                    var success = await User.DeleteUser(userDal,userId);
                     return success ? Results.Ok() : Results.Conflict();
                 }
             )
