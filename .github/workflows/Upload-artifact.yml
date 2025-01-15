@@ -58,7 +58,7 @@ jobs:
           compose-file: './docker-compose.yml'
 
       - name: Upload and build artifact
-        uses: actions/upload-artifact@v2.2.0
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.new_version }}
           path: Stockmarket-app/**
