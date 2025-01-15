@@ -20,6 +20,16 @@ namespace Logic.Functions
             return await userDal.GetUserBalance(userId);
         }
 
+        public static async Task<bool> IsAdmin(IUserDal userDal, string userId)
+        {
+            return await userDal.IsAdmin(userId);
+        }
+        
+        public static async Task<bool> VerifyUser(IUserDal userDal, string name, string password)
+        {
+            return await userDal.VerifyUser(name,password);
+        }
+
         public static async Task<bool> AddUser(IUserDal userDal, string name, string password)
         {
             if (await userDal.VerifyNewUser(name))
@@ -29,11 +39,21 @@ namespace Logic.Functions
             return await userDal.AddUserAsync(name, password);
         }
 
+        public static async Task<string> GetUserId(IUserDal userDal, string name)
+        {
+            return await userDal.GetUserId(name);
+        }
+
         public static async Task<bool> DeleteUser(IUserDal userDal, string userId)
         {
             return await userDal.DeleteUser(userId);
         }
 
+        public static async Task<UserModel[]> GetAllUsers(IUserDal userDal)
+        {
+            return await userDal.GetAllUsers();
+        }
+        
         public static async Task<bool> SellUserStock(
             IUserDal userDal,
             string id,

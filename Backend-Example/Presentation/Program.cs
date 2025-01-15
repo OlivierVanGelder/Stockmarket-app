@@ -38,7 +38,7 @@ builder.Services.AddCors(options =>
         b =>
         {
             b
-                .WithOrigins("http://localhost:3000", "http://localhost", "http://localhost:3010")
+                .WithOrigins("http://localhost:3000", "http://localhost", "http://localhost:3010", "http://admin.localhost")
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials();
@@ -142,7 +142,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseWebSockets();
-app.NewManagerUiController();
 app.NewStockController();
 app.NewUserController(builder.Configuration);
 

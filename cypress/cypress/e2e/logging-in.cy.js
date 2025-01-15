@@ -1,5 +1,3 @@
-import './register.cy';
-
 describe('Loggin in', () => {
   it('fills in the username and password, then submits the form', () => {
     cy.visit('/');
@@ -7,11 +5,11 @@ describe('Loggin in', () => {
       .contains('Graphs')
       .click();
 
-    cy.get('input#username').type('CypressTest');
-    cy.get('input#password').type('CypressTest');
+    cy.get('input#username').type('TestingRegister');
+    cy.get('input#password').type('TestingRegister');
 
     cy.get('form').submit();
-
-    cy.get('p').should('contain.text', 'Login successful');
+    cy.wait(200);
+    cy.url().should('include', '/graphs');
   });
 });

@@ -1,4 +1,4 @@
-describe('template spec', () => {
+describe('Registering', () => {
 
   it('fills in the username and password, then submits the form', () => {
     cy.visit('/');
@@ -15,6 +15,6 @@ describe('template spec', () => {
 
     cy.get('form').submit();
 
-    cy.get('p').should('contain.text', 'Register successful');
+    cy.url().should('include', '/graphs');
   });
 })
