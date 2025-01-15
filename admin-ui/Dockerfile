@@ -10,4 +10,4 @@ RUN pnpm build
 
 FROM lipanski/docker-static-website:latest
 
-COPY --from=build /frontend/build .
+COPY --from=build /frontend/dist .
