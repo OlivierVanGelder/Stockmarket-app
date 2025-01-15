@@ -1,1 +1,1 @@
-StockmarketAppV1.2
+StockmarketAppV1.0
