@@ -1,0 +1,66 @@
+name: Creating artifact
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+  workflow_dispatch:
+
+jobs:
+  Run-app-make-artifact:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install -r
+
+      - name: Read and increment version
+        id: versioning
+        run: |
+          # Check if version.txt exists; create it if not
+          if [ ! -f version.txt ]; then
+            echo "StockmarketAppV1.0" > version.txt
+          fi
+          
+          CURRENT_VERSION=$(cat version.txt)
+          echo "Current version: $CURRENT_VERSION"
+          
+          BASE=$(echo "$CURRENT_VERSION" | sed -E 's/([0-9]+\.[0-9]+)$//')
+          NUMBER=$(echo "$CURRENT_VERSION" | grep -Eo '[0-9]+\.[0-9]+' | awk -F. '{print $2}')
+          MAJOR=$(echo "$CURRENT_VERSION" | grep -Eo '[0-9]+\.[0-9]+' | awk -F. '{print $1}')
+          
+          NEW_NUMBER=$((NUMBER + 1))
+          NEW_VERSION="${BASE}${MAJOR}.${NEW_NUMBER}"
+          echo "New version: $NEW_VERSION"
+          
+          echo "$NEW_VERSION" > version.txt
+          
+          echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
+
+      - name: Commit updated version
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add version.txt
+          git commit -m "Update version to $NEW_VERSION"
+          git push
+
+      - name: Run docker-compose
+        uses: hoverkraft-tech/compose-action@v2.0.1
+        with:
+          compose-file: './docker-compose.yml'
+
+      - name: Upload and build artifact
+        uses: actions/upload-artifact@v2.2.0
+        with:
+          name: ${{ env.new_version }}
+          path: Stockmarket-app/**
+          if-no-files-found: error
+          retention-days: 90
