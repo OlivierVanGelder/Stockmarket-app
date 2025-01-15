@@ -18,10 +18,15 @@ services:
       - external
       - internal
     depends_on:
-      - frontend
+      - frontend-user
+      - frontend-admin
       - backend
-  frontend:
+  frontend-user:
     build: ./react-app
+    networks:
+      - internal
+  frontend-admin:
+    build: ./admin-ui
     networks:
       - internal
   backend:
