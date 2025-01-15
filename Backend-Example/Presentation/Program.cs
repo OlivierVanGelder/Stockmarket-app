@@ -1,36 +1,44 @@
 using System.Text;
-using System.Text.Json;
 using Backend_Example.Controllers;
-using Backend_Example.Logic.Stocks;
-using DAL.BDaccess;
-using DAL.Tables;
+using Logic.Stocks;
+using DAL.DbAccess;
+using Logic.Functions;
 using Logic.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebSockets;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using User = DAL.Tables.User;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var conn = Environment.GetEnvironmentVariable("ConnectionString");
+builder.Services.AddDbContext<DbStockEngine>(options =>
+    options.UseSqlServer(
+        conn ?? builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlOptions =>
+        sqlOptions.CommandTimeout(60)
+            .EnableRetryOnFailure(
+            maxRetryCount: 3,        // Number of retries before failing
+            maxRetryDelay: TimeSpan.FromSeconds(10), // Delay between retries
+            errorNumbersToAdd: null  // You can specify specific SQL error numbers to retry on
+        )
+    )
+);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<Backend_Example.Data.BDaccess.DbStockEngine>(options =>
-    options.UseSqlServer(connectionString)
-);
-
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(
-        "AllowFrontend",
-        builder =>
+    options.AddDefaultPolicy(
+        b =>
         {
-            builder
-                .WithOrigins("http://localhost:3000")
+            b
+                .WithOrigins("http://localhost:3000", "http://localhost", "http://localhost:3010")
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials();
@@ -40,7 +48,7 @@ builder.Services.AddCors(options =>
 
 builder
     .Services.AddIdentity<User, IdentityRole>()
-    .AddEntityFrameworkStores<Backend_Example.Data.BDaccess.DbStockEngine>()
+    .AddEntityFrameworkStores<DbStockEngine>()
     .AddDefaultTokenProviders();
 
 builder.Services.AddAuthorization();
@@ -56,32 +64,29 @@ builder
         {
             OnAuthenticationFailed = context =>
             {
-                if (context.Exception != null)
+                if (context.Exception.InnerException == null)
                 {
-                    context.Response.StatusCode = 401;
-                    context.Response.ContentType = "application/json";
-                    var responseMessage = new { message = "Authentication failed" };
-                    return context.Response.WriteAsJsonAsync(responseMessage);
+                    return Task.CompletedTask;
                 }
 
-                return Task.CompletedTask;
-            },
+                context.Response.StatusCode = 401;
+                context.Response.ContentType = "application/json";
+                var responseMessage = new { message = "Authentication failed" };
+                return context.Response.WriteAsJsonAsync(responseMessage);
 
+            },
             OnChallenge = context =>
             {
-                if (!context.Response.HasStarted)
+                if (context.Response.HasStarted)
                 {
-                    context.HandleResponse();
-
-                    context.Response.StatusCode = 401;
-                    context.Response.ContentType = "application/json";
-
-                    var responseMessage = new { message = "Authentication required" };
-                    return context.Response.WriteAsJsonAsync(responseMessage);
+                    return Task.CompletedTask;
                 }
-
-                return Task.CompletedTask;
-            },
+                context.HandleResponse();
+                context.Response.StatusCode = 401;
+                context.Response.ContentType = "application/json";
+                var responseMessage = new { message = "Authentication required" };
+                return context.Response.WriteAsJsonAsync(responseMessage);
+            }
         };
 
         options.TokenValidationParameters = new TokenValidationParameters
@@ -93,8 +98,8 @@ builder
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])
-            ),
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "")
+            )
         };
     });
 
@@ -108,19 +113,23 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.Password.RequireNonAlphanumeric = false;
 });
 
-builder.Services.AddScoped<IUserDAL, UserDAL>();
-builder.Services.AddScoped<IStockDAL, StockDAL>();
+builder.Services.AddScoped<IUserDal, UserDal>();
 builder.Services.AddScoped<LineStock>();
+builder.Services.AddScoped<IStockDal, StockDal>();
 
-builder.Services.AddCors(policyBuilder =>
-    policyBuilder.AddDefaultPolicy(policy =>
-        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()
-    )
-);
+builder.Services.AddHostedService<StockWritingService>();
 
-builder.Services.AddWebSockets(options => { });
+builder.Services.AddWebSockets(_ => { });
 
 var app = builder.Build();
+
+app.UseCors();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<DbStockEngine>();
+    dbContext.Database.Migrate();
+}
 
 if (app.Environment.IsDevelopment())
 {
@@ -128,18 +137,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-app.UseStaticFiles();
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseCors("AllowFrontend");
-
-// Enable WebSockets
 app.UseWebSockets();
-app.Stockcontroller(builder.Configuration);
-app.Usercontroller(builder.Configuration);
+app.NewManagerUiController();
+app.NewStockController();
+app.NewUserController(builder.Configuration);
 
 app.Run();

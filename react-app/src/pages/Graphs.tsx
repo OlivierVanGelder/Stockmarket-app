@@ -27,7 +27,7 @@ const SellButton = styled(Button)(() => ({
 
 async function fetchStockNames(): Promise<string[]> {
     try {
-        const response = await fetch('https://localhost:42069/stocks/names')
+        const response = await fetch('http://api.localhost/stocks/names')
         if (!response.ok) throw new Error('Failed to fetch stock names')
         return await response.json()
     } catch (error) {
@@ -40,7 +40,7 @@ async function fetchUserBalance(): Promise<number> {
     try {
         const userId = sessionStorage.getItem('userId')
         const response = await fetch(
-            `https://localhost:42069/users/${userId}/balance`,
+            `http://api.localhost/users/${userId}/balance`,
             {
                 method: 'GET',
                 headers: {
@@ -58,7 +58,7 @@ async function fetchUserBalance(): Promise<number> {
 }
 
 function convertToDays(date: Date): number {
-    const referenceDate = new Date('2020-11-01T12:00:00Z')
+    const referenceDate = new Date('2024-11-01T12:00:00Z')
     return parseFloat(
         (
             (date.getTime() - referenceDate.getTime()) /
@@ -101,7 +101,7 @@ function Graphs() {
         new Interval(1, '1 day')
     ])
     const socket = useMemo(
-        () => new WebSocket(`wss://localhost:42069/stocks/StockWS`),
+        () => new WebSocket(`ws://api.localhost/stocks/StockWS`),
         []
     )
 
@@ -123,7 +123,7 @@ function Graphs() {
 
         const userId = sessionStorage.getItem('userId')
         const response = await fetch(
-            `https://localhost:42069/users/${userId}/stock`,
+            `http://api.localhost/users/${userId}/stock`,
             {
                 method: 'PUT',
                 headers: {
@@ -161,7 +161,7 @@ function Graphs() {
     useEffect(() => {
         const userId = sessionStorage.getItem('userId')
         fetch(
-            `https://localhost:42069/users/${userId}/stock/amount?ticker=${ticker}`,
+            `http://api.localhost/users/${userId}/stock/amount?ticker=${ticker}`,
             {
                 method: 'GET',
                 headers: {
@@ -342,6 +342,7 @@ function Graphs() {
                 <div className="select-item">
                     <p className="select-label">Start Time:</p>
                     <select
+                        className="cypress-start-time-select"
                         id="start-time-select"
                         value={startTimeString}
                         onChange={e => setStartDay(e.target.value)}
@@ -377,6 +378,7 @@ function Graphs() {
                                 openPopup()
                             }}
                             size="large"
+                            className="cypress-buy-button"
                         >
                             Buy
                         </BuyButton>
@@ -395,6 +397,7 @@ function Graphs() {
                                 openPopup()
                             }}
                             size="large"
+                            className="cypress-sell-button"
                         >
                             Sell
                         </SellButton>
@@ -402,7 +405,7 @@ function Graphs() {
                 </div>
                 <div className="select-item-last">
                     <p className="select-label">
-                        Balance: {userBalance.toFixed(2)}
+                        Balance: ${userBalance.toFixed(2)}
                     </p>
                 </div>
             </div>
@@ -420,7 +423,7 @@ function Graphs() {
                 candleSelected={candleSelected}
                 setCandleSelected={setCandleSelected}
             />
-            <h2>Stock owned: {stockAmount}</h2>
+            <h2 className="cypress-stockAmount">Stock owned: {stockAmount}</h2>
             {invalidData ? (
                 <div>
                     <h1>Invalid Data</h1>
@@ -437,7 +440,10 @@ function Graphs() {
                                 margin: '35px'
                             }}
                         >
-                            <LineChart chartData={chartData.datasets} />
+                            <LineChart
+                                chartData={chartData.datasets}
+                                labels={chartData.labels}
+                            />
                         </div>
                     )}
                 </div>

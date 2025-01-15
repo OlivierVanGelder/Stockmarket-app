@@ -1,0 +1,17 @@
+{
+	"scripts": {
+  	"start": "react-scripts start"
+	},
+
+	"include": ["./src", "cypress.d.ts"],
+
+	"devDependencies": {
+		"cypress": "^13.16.1"
+	},
+	"dependencies": {
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0",
+		"react-router-dom": "^7.0.2",
+		"react-scripts": "^5.0.1"
+	}
+}

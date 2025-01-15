@@ -1,0 +1,12 @@
+{
+	admin off
+	auto_https off
+}
+
+http://api.localhost {
+	reverse_proxy backend:6969
+}
+
+http://localhost {
+	reverse_proxy frontend:3000
+}

@@ -1,17 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 
-namespace DAL.Tables
+namespace DAL.Tables;
+
+[PrimaryKey(nameof(UserId), nameof(StockId))]
+public class User_Stock
 {
-    [PrimaryKey(nameof(UserId), nameof(StockId))]
-    public class User_Stock
-    {
-        public string UserId { get; set; }
-        public int StockId { get; set; }
-        public int StockAmount { get; set; }
-    }
+    public string UserId { get; set; } = "";
+    public int StockId { get; set; }
+    public int StockAmount { get; set; }
 }

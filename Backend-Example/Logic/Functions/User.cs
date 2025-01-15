@@ -1,25 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Logic.Interfaces;
+﻿using Logic.Interfaces;
+using Logic.Models;
 
 namespace Logic.Functions
 {
-    public class User
+    public static class User
     {
-        public async Task<string> GetUserName(IUserDAL userDal, string userId)
+        public static async Task<StockAmount[]> GetUserStocks(IUserDal userDal, string userId)
+        {
+            return await userDal.GetUserStocks(userId);
+        }
+        
+        public static async Task<string> GetUserName(IUserDal userDal, string userId)
         {
             return await userDal.GetUserName(userId);
         }
 
-        public async Task<double> GetUserBalance(IUserDAL userDal, string userId)
+        public static async Task<double> GetUserBalance(IUserDal userDal, string userId)
         {
             return await userDal.GetUserBalance(userId);
         }
 
-        public async Task<bool> AddUser(IUserDAL userDal, string name, string password)
+        public static async Task<bool> AddUser(IUserDal userDal, string name, string password)
         {
             if (await userDal.VerifyNewUser(name))
             {
@@ -28,13 +29,13 @@ namespace Logic.Functions
             return await userDal.AddUserAsync(name, password);
         }
 
-        public async Task<bool> DeleteUser(IUserDAL userDal, string userId)
+        public static async Task<bool> DeleteUser(IUserDal userDal, string userId)
         {
             return await userDal.DeleteUser(userId);
         }
 
-        public async Task<bool> SellUserStock(
-            IUserDAL userDal,
+        public static async Task<bool> SellUserStock(
+            IUserDal userDal,
             string id,
             string ticker,
             int amount,
@@ -44,8 +45,8 @@ namespace Logic.Functions
             return await userDal.SellUserStock(id, ticker, amount, price);
         }
 
-        public async Task<bool> BuyUserStock(
-            IUserDAL userDal,
+        public static async Task<bool> BuyUserStock(
+            IUserDal userDal,
             string id,
             string ticker,
             int amount,
@@ -56,7 +57,7 @@ namespace Logic.Functions
         }
 
         /// <exception cref="ArgumentException"></exception>
-        public async Task<double> GetUserStockAmount(IUserDAL userDal, string id, string ticker)
+        public static async Task<double> GetUserStockAmount(IUserDal userDal, string id, string ticker)
         {
             try
             {

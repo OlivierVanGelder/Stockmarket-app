@@ -1,25 +1,24 @@
-﻿using Backend_Example.Logic.Classes;
-using Logic.Interfaces;
+﻿using Logic.Interfaces;
+using Logic.Models;
 
-namespace Backend_Example.Logic.Stocks
+namespace Logic.Stocks;
+
+public class LineStock
 {
-    public class LineStock
+    public static Task<LineItem[]> GetValues(
+        string stockName,
+        DateTime startTime,
+        DateTime endTime,
+        TimeSpan interval,
+        IStockDal stockDal
+    )
     {
-        public Task<LineItem[]> GetValues(
-            string stockName,
-            DateTime startTime,
-            DateTime endTime,
-            TimeSpan interval,
-            IStockDAL stockDal
-        )
-        {
-            Task<LineItem[]> values = stockDal.GetLineValues(
-                stockName,
-                startTime,
-                endTime,
-                interval
-            );
-            return values;
-        }
+        var values = stockDal.GetLineValues(
+            stockName,
+            startTime,
+            endTime,
+            interval
+        );
+        return values;
     }
-}
+}  

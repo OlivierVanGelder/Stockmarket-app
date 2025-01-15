@@ -1,0 +1,33 @@
+name: End-to-end tests
+
+on:
+    push:
+        branches: ['main']
+    pull_request:
+        branches: ['main']
+    workflow_dispatch:
+
+jobs:
+    cypress-run:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Install pnpm
+              working-directory: ./cypress
+              run: npm install -g pnpm
+
+            - name: Install dependencies
+              working-directory: ./cypress
+              run: pnpm install -r
+
+            - name: Run docker-compose
+              uses: hoverkraft-tech/compose-action@v2.0.1
+              with:
+                  compose-file: './docker-compose.yml'
+
+            - name: Run Cypress tests
+              working-directory: ./cypress
+              run: pnpm npx cypress run

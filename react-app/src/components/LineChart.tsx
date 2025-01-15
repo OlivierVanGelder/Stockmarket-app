@@ -28,12 +28,34 @@ interface LineGraphItem {
         backgroundColor: string
         borderColor: string
     }[]
+    labels?: string[] // Add an optional 'labels' property
 }
 
-const LineChart: React.FC<LineGraphItem> = ({ chartData }) => {
+const LineChart: React.FC<LineGraphItem> = ({ chartData, labels }) => {
+    console.log(chartData)
     const data = {
         labels:
-            chartData[0]?.values.map((_, index) => `Label ${index + 1}`) || [],
+            chartData[0]?.values.map((_, index) => {
+                const label = labels?.[index]
+                if (label) {
+                    const date = new Date(label)
+                    const formattedDate = date
+                        .toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric'
+                        })
+                        .replace(',', '') // Remove the comma
+
+                    const formattedTime = date.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    })
+
+                    return `${formattedDate} ${formattedTime}`
+                }
+                return `Label ${index + 1}`
+            }) || [],
         datasets: chartData.map(item => ({
             label: item.label,
             data: item.values,
@@ -68,7 +90,7 @@ const LineChart: React.FC<LineGraphItem> = ({ chartData }) => {
                     tooltip: {
                         callbacks: {
                             label: function (context) {
-                                // Format tooltip to show 2 decimal places for points
+                                console.log(context)
                                 return `${context.dataset.label}: ${(
                                     context.raw as number
                                 ).toFixed(2)}`
@@ -85,7 +107,7 @@ const LineChart: React.FC<LineGraphItem> = ({ chartData }) => {
                         ticks: {
                             color: '#9AA0A6',
                             font: {
-                                size: 14
+                                size: 13.5
                             }
                         },
                         grid: {

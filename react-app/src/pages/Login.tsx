@@ -4,6 +4,7 @@ import LoginForm from '../components/LoginForm'
 import RegisterForm from '../components/RegisterForm'
 import ToggleButtonNotEmpty from '../components/ToggleButton'
 import { Button } from '@mui/material'
+import { Navigate, redirect, useNavigate } from 'react-router-dom'
 
 const Login = () => {
     // Local state for storing username and password
@@ -26,14 +27,19 @@ const Login = () => {
         await register(username, password)
     }
 
+    const navigate = useNavigate()
+    const navigateToGraphs = async () => {
+        // Your login logic here
+        navigate('/graphs') // Navigate after login
+    }
+
     async function login(username: string, password: string) {
         try {
             const response = await fetch(
-                `https://localhost:42069/users/${username}/login?password=${password}`,
+                `http://api.localhost/users/${username}/login?password=${password}`,
                 {
                     method: 'GET',
                     headers: {
-                        'Access-Control-Allow-Origin': '*',
                         'Content-Type': 'application/json'
                     },
                     credentials: 'include'
@@ -51,6 +57,7 @@ const Login = () => {
             sessionStorage.setItem('userId', userId)
             sessionStorage.setItem('token', token)
             setMessage({ message: 'Login successful', color: 'green' })
+            navigateToGraphs()
         } catch (error) {
             setMessage({
                 message: `Error during logging in: ${error}`,
@@ -61,15 +68,14 @@ const Login = () => {
 
     async function register(username: string, password: string) {
         const registerRequest = {
-            name: username,
-            password: password
+            Name: username,
+            Password: password
         }
 
         try {
-            const response = await fetch(`https://localhost:42069/users/`, {
+            const response = await fetch(`http://api.localhost/users/`, {
                 method: 'POST',
                 headers: {
-                    'Access-Control-Allow-Origin': '*',
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(registerRequest),
@@ -87,6 +93,7 @@ const Login = () => {
             sessionStorage.setItem('userId', userId)
             sessionStorage.setItem('token', token)
             setMessage({ message: 'Register successful', color: 'green' })
+            navigateToGraphs()
         } catch (error) {
             setMessage({
                 message: `Error during register: ${error}`,

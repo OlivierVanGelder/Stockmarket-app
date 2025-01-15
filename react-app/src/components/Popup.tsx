@@ -52,12 +52,23 @@ const Popup: React.FC<PopupProps> = ({
                     value={amount}
                     onChange={handleAmountChange}
                     placeholder="Amount"
+                    className="cypress-amount"
                 />
                 <div>
                     {isBuy ? (
-                        <button onClick={handleSubmit}>Confirm Purchase</button>
+                        <button
+                            className={'cypress-purchase'}
+                            onClick={handleSubmit}
+                        >
+                            Confirm Purchase
+                        </button>
                     ) : (
-                        <button onClick={handleSubmit}>Confirm Sale</button>
+                        <button
+                            className={'cypress-sell'}
+                            onClick={handleSubmit}
+                        >
+                            Confirm Sale
+                        </button>
                     )}
                     <button onClick={onClose}>Cancel</button>
                 </div>

@@ -7,7 +7,7 @@ async function fetchUserBalance(): Promise<number> {
     try {
         const userId = sessionStorage.getItem('userId')
         const response = await fetch(
-            `https://localhost:42069/users/${userId}/balance`,
+            `http://api.localhost/users/${userId}/balance`,
             {
                 method: 'GET',
                 headers: {
@@ -29,7 +29,7 @@ async function fetchUserName(): Promise<string> {
     try {
         const userId = sessionStorage.getItem('userId')
         const response = await fetch(
-            `https://localhost:42069/users/${userId}/name`,
+            `http://api.localhost/users/${userId}/name`,
             {
                 method: 'GET',
                 headers: {
@@ -48,7 +48,7 @@ async function fetchUserName(): Promise<string> {
 }
 
 const Account = () => {
-    const [userBalance, setUserBalance] = useState<number>(0)
+    const [userBalance, setUserBalance] = useState<number>(0.0)
     const [userName, setUserName] = useState<string>('')
 
     useEffect(() => {
@@ -71,7 +71,7 @@ const Account = () => {
                 >
                     <h1>Account</h1>
                     <h3>Username: {userName}</h3>
-                    <h3>Balance: {userBalance}</h3>
+                    <h3>Balance: ${userBalance.toFixed(2)}</h3>
                 </Card>
             </div>
         </div>

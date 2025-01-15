@@ -1,110 +1,108 @@
-﻿using Backend_Example.Logic.Classes;
+﻿using Logic.Models;
 using Logic.Interfaces;
 
-namespace Backend_Example.Logic.Stocks
+namespace Logic.Stocks;
+
+public class CandleStock
 {
-    public class CandleStock
+    public static Task<CandleItem[]> GetCandleValues(
+        string stock,
+        double startX,
+        double endX,
+        double intervalDays,
+        IStockDal stockDal
+    )
     {
-        public static Task<CandleItem[]> GetCandleValues(
-            string stock,
-            double startX,
-            double endX,
-            double intervalDays,
-            IStockDAL stockDAL
-        )
-        {
-            DateTime startDate = Converter.ConvertDigitToDate(startX);
-            DateTime endDate = Converter.ConvertDigitToDate(endX);
-            TimeSpan interval = TimeSpan.FromDays(intervalDays);
-            Console.WriteLine($"startDate: {startDate} EndDate: {endDate}");
-            return stockDAL.GetCandleValues(stock, startDate, endDate, interval);
-        }
+        var startDate = Converter.ConvertDigitToDate(startX);
+        var endDate = Converter.ConvertDigitToDate(endX);
+        var interval = TimeSpan.FromDays(intervalDays);
+        Console.WriteLine($"startDate: {startDate} EndDate: {endDate}");
+        return stockDal.GetCandleValues(stock, startDate, endDate, interval);
+    }
 
-        public static CandleItem[] CreateCandleValues(
-            double mS,
-            double startX,
-            double endX,
-            double interval
-        )
-        {
-            // Calculate the number of values based on the range and interval
-            int numberOfValues = (int)((endX - startX) / interval) + 1;
-            CandleItem[] values = new CandleItem[numberOfValues];
+    public static CandleItem[] CreateCandleValues(
+        double mS,
+        double startX,
+        double endX,
+        double interval
+    )
+    {
+        // Calculate the number of values based on the range and interval
+        var numberOfValues = (int)((endX - startX) / interval) + 1;
+        var values = new CandleItem[numberOfValues];
 
-            // Use Parallel.For for potential speed-up by parallelizing loop execution
-            Parallel.For(
-                0,
-                numberOfValues,
-                i =>
-                {
-                    double x = startX + i * interval; // x increments by the specified interval
-                    double open = Formula.CalculateFormula(x, mS) ?? 0;
-                    double close = Formula.CalculateFormula(x + interval, mS) ?? 0;
-                    double high = GetHighValue(x, interval, mS, 20); // Use fewer iterations for speed
-                    double low = GetLowValue(x, interval, mS, 20); // Use fewer iterations for speed
-                    DateTime date = Converter.ConvertDigitToDate(x);
-                    double volume = Math.Round(
-                        Math.Abs(
-                            100 / open * (high - low) * (258 + (Math.Sin(30000 * x) + 1) * mS)
-                        ),
-                        2
-                    );
-
-                    open = Math.Round(open, 2);
-                    close = Math.Round(close, 2);
-                    high = Math.Round(high, 2);
-                    low = Math.Round(low, 2);
-                    values[i] = new CandleItem(open, close, high, low, volume, date);
-                }
-            );
-
-            return values;
-        }
-
-        // Reduce iteration count for faster calculations
-        private static double GetHighValue(
-            double x,
-            double interval,
-            double mS,
-            int samplePoints = 20
-        )
-        {
-            double highValue = double.MinValue;
-            double step = interval / samplePoints;
-
-            for (int i = 0; i <= samplePoints; i++)
+        Parallel.For(
+            0,
+            numberOfValues,
+            i =>
             {
-                double result = Formula.CalculateFormula(x + step * i, mS) ?? 0;
-                if (result > highValue)
-                    highValue = result;
+                var x = startX + i * interval; // x increments by the specified interval
+                var open = Formula.CalculateFormula(x, mS) ?? 0;
+                var close = Formula.CalculateFormula(x + interval, mS) ?? 0;
+                var high = GetHighValue(x, interval, mS); // Use fewer iterations for speed
+                var low = GetLowValue(x, interval, mS); // Use fewer iterations for speed
+                var date = Converter.ConvertDigitToDate(x);
+                var volume = Math.Round(
+                    Math.Abs(
+                        100 / open * (high - low) * (258 + (Math.Sin(30000 * x) + 1) * mS)
+                    ),
+                    2
+                );
+
+                open = Math.Round(open, 2);
+                close = Math.Round(close, 2);
+                high = Math.Round(high, 2);
+                low = Math.Round(low, 2);
+                values[i] = new CandleItem(open, close, high, low, volume, date);
             }
+        );
 
-            return highValue;
-        }
+        return values;
+    }
 
-        private static double GetLowValue(
-            double x,
-            double interval,
-            double mS,
-            int samplePoints = 20
-        )
+    // Reduce iteration count for faster calculations
+    private static double GetHighValue(
+        double x,
+        double interval,
+        double mS,
+        int samplePoints = 20
+    )
+    {
+        var highValue = double.MinValue;
+        var step = interval / samplePoints;
+
+        for (var i = 0; i <= samplePoints; i++)
         {
-            double lowValue = double.MaxValue;
-            double step = interval / samplePoints;
-
-            for (int i = 0; i <= samplePoints; i++)
-            {
-                double result = Formula.CalculateFormula(x + step * i, mS) ?? 0;
-                if (result < lowValue)
-                    lowValue = result;
-            }
-
-            return lowValue;
+            var result = Formula.CalculateFormula(x + step * i, mS) ?? 0;
+            if (result > highValue)
+                highValue = result;
         }
 
-        public static string[] GetStockNames(IStockDAL stockDAL)
+        return highValue;
+    }
+
+    private static double GetLowValue(
+        double x,
+        double interval,
+        double mS,
+        int samplePoints = 20
+    )
+    {
+        var lowValue = double.MaxValue;
+        var step = interval / samplePoints;
+
+        for (var i = 0; i <= samplePoints; i++)
         {
-            return stockDAL.GetStockNames();
+            var result = Formula.CalculateFormula(x + step * i, mS) ?? 0;
+            if (result < lowValue)
+                lowValue = result;
         }
+
+        return lowValue;
+    }
+
+    public static string[] GetStockNames(IStockDal stockDal)
+    {
+        return stockDal.GetStockNames();
     }
 }
