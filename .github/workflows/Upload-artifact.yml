@@ -57,26 +57,18 @@ jobs:
         with:
           compose-file: './docker-compose.yml'
 
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }} # Added the token here
-          tag_name: ${{ env.new_version }}  # Use the version as the tag
-          release_name: ${{ env.new_version }}  # Use the version as the release name
-          body: |
-            This release contains the artifact for version ${{ env.new_version }}.
-          draft: false
-          prerelease: false
-
       - name: Package artifact
         run: |
           zip -r artifact.zip ./*  # Package all files into a zip named 'artifact.zip'
 
-      - name: Upload artifact to release
-        uses: actions/upload-release-asset@v1
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifact.zip
-          asset_name: artifact-${{ env.new_version }}.zip
-          asset_content_type: application/zip
+          token: ${{ secrets.GITHUB_TOKEN }} # Use the GitHub token
+          tag: ${{ env.new_version }} # Use the version as the tag
+          name: ${{ env.new_version }} # Use the version as the release name
+          body: |
+            This release contains the artifact for version ${{ env.new_version }}.
+          artifacts: artifact.zip
+          draft: false
+          prerelease: false
