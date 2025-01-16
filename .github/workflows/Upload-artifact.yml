@@ -59,6 +59,7 @@ jobs:
 
             - name: Package artifact
               run: |
+                  # Exclude unnecessary files and directories while zipping
                   zip -r artifact.zip ./ \
                     -x ".github/**" \
                         "cypress/**" \
