@@ -60,14 +60,13 @@ jobs:
             - name: Package artifact
               run: |
                   zip -r artifact.zip ./ \
-                    -x ".github/**" \
-                        "cypress/**" \
-                        ".idea/**" \
-                        "**/*.yml" \
-                        "qodana.yaml" \
-                        "*.Dockerfile" \
-                        "*.lock.yaml" \
-                        "node_modules/**"
+                    -x ".github/*" \
+                    -x "react-app/*" \
+                    -x ".gitignore" \
+                    -x "qodana.yaml" \
+                    -x "*.Dockerfile" \
+                    -x "*.lock.yaml" \
+                    -x "node_modules/*"
 
             - name: Create GitHub Release
               uses: ncipollo/release-action@v1
