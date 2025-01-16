@@ -28,9 +28,6 @@ jobs:
               with:
                   compose-file: './docker-compose.yml'
 
-            - name: Wait for services to be ready
-              run: npx wait-on http://localhost
-
             - name: Run Cypress tests
               working-directory: ./cypress
               run: pnpm npx cypress run
