@@ -23,7 +23,7 @@ public static class JwtHelper
             new Claim(JwtRegisteredClaimNames.Sub, username),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim("role", role),
-            new Claim("userId", userId),
+            new Claim("userId", userId)
         };
         var token = new JwtSecurityToken(
             issuer: "StockEngine",

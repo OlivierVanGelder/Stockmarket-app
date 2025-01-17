@@ -32,9 +32,8 @@ public static class UserController
             {
                 return Results.Unauthorized();
             }
-
-            var users = await User.GetAllUsers(userDal);
-            return Results.Json(users);
+            
+            return Results.Json(await User.GetAllUsers(userDal));
         });
         
         users.MapGet(

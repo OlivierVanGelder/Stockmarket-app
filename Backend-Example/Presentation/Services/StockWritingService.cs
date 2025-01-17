@@ -1,12 +1,11 @@
-using System.Formats.Asn1;
-using DAL.DbAccess;
 using Logic.Functions;
 using Logic.Interfaces;
-using Microsoft.OpenApi.Writers;
+
+namespace Backend_Example.Services;
 
 public class StockWritingService : BackgroundService
 {
-    private IServiceProvider _serviceProvider;
+    private readonly IServiceProvider _serviceProvider;
 
     public StockWritingService(IServiceProvider serviceProvider)
     {

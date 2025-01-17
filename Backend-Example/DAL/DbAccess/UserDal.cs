@@ -21,28 +21,20 @@ public class UserDal : IUserDal
     public async Task<UserModel[]> GetAllUsers()
     {
         var users = _context.Users.ToList();
-        List<UserModel> userModels = new List<UserModel>();
+        var userModels = new List<UserModel>();
 
         foreach (var user in users)
         {
             // Fetch the user balance
-            double balance = await GetUserBalance(user.Id);
+            var balance = await GetUserBalance(user.Id);
 
-            // Fetch the total stock value for the user
-            double totalStockValue = 0;
             var userStocks = await GetUserStocks(user.Id);
 
-            // Sum up the value of each stock the user holds
-            foreach (var stockAmount in userStocks)
-            {
-                totalStockValue += stockAmount.TotalValue;
-            }
+            var totalStockValue = userStocks.Sum(stockAmount => stockAmount.TotalValue);
 
-            // Calculate total balance (balance in cents + stock value)
-            double totalBalance = balance + totalStockValue;
+            var totalBalance = balance + totalStockValue;
 
-            // Create a new UserModel and add to the list
-            var userModel = new UserModel(user.Id, user.UserName, (int)(totalBalance * 100)); // Store balance in cents
+            var userModel = new UserModel(user.Id, user.UserName ?? "", (int)(totalBalance * 100)); // Store balance in cents
             userModels.Add(userModel);
         }
 
@@ -116,29 +108,7 @@ public class UserDal : IUserDal
 
         return false;
     }
-
-    public async Task<bool> UpdateUserBalance(string id, double balance, double change)
-    {
-        var user = await _userManager.FindByIdAsync(id);
-        if (user == null)
-        {
-            return false;
-        }
-
-        user.BalanceInCents = (int)(balance * 100);
-        var result = await _userManager.UpdateAsync(user);
-        if (result.Succeeded)
-        {
-            return true;
-        }
-        foreach (var error in result.Errors)
-        {
-            Debug.WriteLine(error.Description);
-        }
-
-        return false;
-    }
-
+    
     /// <exception cref="ArgumentException"></exception>
     public async Task<double> GetUserStockAmount(string userId, string ticker)
     {
@@ -151,25 +121,21 @@ public class UserDal : IUserDal
         var userStock = _context.User_Stocks.FirstOrDefault(us =>
             us.UserId == user.Id && us.StockId == stock.Id
         );
-        if (userStock == null)
-        {
-            return 0;
-        }
-        return userStock.StockAmount;
+        return userStock?.StockAmount ?? 0;
     }
 
     public async Task<StockAmount[]> GetUserStocks(string userId)
     {
         var allStocks = _context.Stocks.ToList();
-        List<StockAmount> allUserStockAmounts = new List<StockAmount>();
+        var allUserStockAmounts = new List<StockAmount>();
 
         foreach (var stock in allStocks)
         {
             var stockDal = new StockDal(_context);
             var userStock = _context.User_Stocks.FirstOrDefault(us => us.UserId == userId && us.StockId == stock.Id);
             var price = await stockDal.GetStockPrice(stock.Ticker);
-            var stockAmountValue = userStock != null ? userStock.StockAmount : 0;
-            StockAmount stockAmount = new StockAmount(stock.Ticker, stockAmountValue, price);
+            var stockAmountValue = userStock?.StockAmount ?? 0;
+            var stockAmount = new StockAmount(stock.Ticker, stockAmountValue, price);
             allUserStockAmounts.Add(stockAmount);
         }
 
@@ -204,7 +170,7 @@ public class UserDal : IUserDal
             userStock.StockAmount += amount;
         }
         var oldBalance = await GetUserBalance(id);
-        var newBalance = oldBalance - (price * amount);
+        var newBalance = oldBalance - price * amount;
         if (!await UpdateUserBalance(id, newBalance))
         {
             return false;
@@ -285,6 +251,6 @@ public class UserDal : IUserDal
         var user = await _userManager.FindByIdAsync(id);
         var userName = (user ?? new User()).UserName;
 
-        return userName;
+        return userName ?? "";
     }
 }
