@@ -8,5 +8,9 @@ http://api.localhost {
 }
 
 http://localhost {
-	reverse_proxy frontend:3000
+	reverse_proxy frontend-user:3000
+}
+
+http://admin.localhost {
+	reverse_proxy frontend-admin:3010
 }

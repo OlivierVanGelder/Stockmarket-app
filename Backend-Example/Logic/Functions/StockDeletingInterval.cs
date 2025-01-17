@@ -1,27 +1,22 @@
 ﻿using Logic.Interfaces;
 
-namespace Logic.Functions
+namespace Logic.Functions;
+
+public class StockDeletingInterval
 {
-    public class StockDeletingInterval
+    private readonly System.Timers.Timer _timer;
+
+    public StockDeletingInterval(double intervalInSeconds, IStockDal stockDal)
     {
-        private readonly System.Timers.Timer _timer;
+        _timer = new System.Timers.Timer(intervalInSeconds * 1000);
+        // Qodana suppression: Sender and EventArgs required by event signature
+        _timer.Elapsed += (sender, e) => DeleteDuplicates(stockDal);
+        _timer.AutoReset = true;
+        _timer.Enabled = true;
+    }
 
-        public StockDeletingInterval(double intervalInSeconds, IStockDal stockDal)
-        {
-            _timer = new System.Timers.Timer(intervalInSeconds * 1000);
-            _timer.Elapsed += (sender, e) => DeleteDuplicates(stockDal);
-            _timer.AutoReset = true;
-            _timer.Enabled = true;
-        }
-
-        public void StopTimer()
-        {
-            _timer.Stop();
-        }
-
-        private static void DeleteDuplicates(IStockDal stockDal)
-        {
-            stockDal.DeleteDuplicateStocks();
-        }
+    private static void DeleteDuplicates(IStockDal stockDal)
+    {
+        stockDal.DeleteDuplicateStocks();
     }
 }

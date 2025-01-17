@@ -2,7 +2,6 @@ using System.Text;
 using Backend_Example.Controllers;
 using Logic.Stocks;
 using DAL.DbAccess;
-using Logic.Functions;
 using Logic.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -10,6 +9,7 @@ using Microsoft.AspNetCore.WebSockets;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using User = DAL.Tables.User;
+using Backend_Example.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 

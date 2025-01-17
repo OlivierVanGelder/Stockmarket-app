@@ -8,10 +8,9 @@ public static class Converter
         return word.Substring(0, 4).ToUpper().Sum(c => c - 'A');
     }
 
-    public static DateTime ConvertDigitToDate(double x)
+    public static DateTime ConvertDigitToDate(double totalIncrement)
     {
         var baseDate = new DateTime(2024, 11, 1, 12, 0, 0);
-        var totalIncrement = x;
         var currentDate = baseDate;
         currentDate = currentDate.AddDays(Math.Floor(totalIncrement));
 
