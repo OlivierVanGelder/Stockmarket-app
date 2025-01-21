@@ -12,5 +12,6 @@ public class User : IdentityUser
 
     public int BalanceInCents { get; set; }
     public bool IsAdmin { get; set; } = false;
+    public bool IsFrozen { get; set; } = false;
     public List<User_Stock> UserStocks { get; set; } = [];
 }

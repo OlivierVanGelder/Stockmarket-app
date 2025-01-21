@@ -16,4 +16,7 @@ public interface IUserDal
     Task<bool> SellUserStock(string id, string ticker, int amount, double price);
     Task<bool> BuyUserStock(string id, string ticker, int amount, double price);
     Task<double> GetUserStockAmount(string id, string ticker);
+    Task<bool> IsFrozen(string userId);
+    Task<bool> Freeze(string userId);
+    Task<bool> UnFreeze(string userId);
 }

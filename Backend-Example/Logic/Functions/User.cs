@@ -23,6 +23,19 @@ public static class User
     {
         return await userDal.IsAdmin(userId);
     }
+
+    public static async Task<bool> IsFrozen(IUserDal userDal, string userId)
+    {
+        return await userDal.IsFrozen(userId);
+    }
+    
+    public static async Task<bool> FreezeUser(IUserDal userDal, string userId)
+    {
+        return await userDal.Freeze(userId);
+    }    public static async Task<bool> UnFreezeUser(IUserDal userDal, string userId)
+    {
+        return await userDal.UnFreeze(userId);
+    }
     
     public static async Task<bool> VerifyUser(IUserDal userDal, string name, string password)
     {
