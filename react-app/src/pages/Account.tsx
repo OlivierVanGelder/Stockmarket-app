@@ -75,9 +75,32 @@ async function fetchUserName(): Promise<string> {
     }
 }
 
+async function fetchUserIsFrozen(): Promise<boolean> {
+    try {
+        const userId = sessionStorage.getItem('userId')
+        const response = await fetch(
+            `http://api.localhost/users/${userId}/isfrozen`,
+            {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem('token')}`
+                },
+                credentials: 'include'
+            }
+        )
+        if (!response.ok) throw new Error('Failed to fetch user status')
+        const data = await response.json()
+        return await data.isFrozen
+    } catch (error) {
+        console.error('Error fetching user name:', error)
+        return false
+    }
+}
+
 const Account = () => {
     const [userBalance, setUserBalance] = useState<number>(0.0)
     const [userName, setUserName] = useState<string>('')
+    const [userIsFrozen, setUserIsFrozen] = useState<boolean>(false)
     const [openDialog, setOpenDialog] = useState<boolean>(false)
 
     const navigate = useNavigate()
@@ -88,6 +111,7 @@ const Account = () => {
     useEffect(() => {
         fetchUserName().then(setUserName)
         fetchUserBalance().then(setUserBalance)
+        fetchUserIsFrozen().then(setUserIsFrozen)
     }, [])
 
     const handleDeleteAccount = async () => {
@@ -117,6 +141,7 @@ const Account = () => {
                     <h1>Account</h1>
                     <h3>Username: {userName}</h3>
                     <h3>Balance: ${userBalance.toFixed(2)}</h3>
+                    <h3>Status: {userIsFrozen ? 'Frozen' : 'Active'}</h3>
                     <Button
                         className="cypress-delete-account"
                         variant="outlined"

@@ -33,8 +33,10 @@ public class UserDal : IUserDal
             var totalStockValue = userStocks.Sum(stockAmount => stockAmount.TotalValue);
 
             var totalBalance = balance + totalStockValue;
+            
+            var isFrozen = user.IsFrozen;
 
-            var userModel = new UserModel(user.Id, user.UserName ?? "", (int)(totalBalance * 100)); // Store balance in cents
+            var userModel = new UserModel(user.Id, user.UserName ?? "", (int)(totalBalance * 100),isFrozen); // Store balance in cents
             userModels.Add(userModel);
         }
 
@@ -238,6 +240,38 @@ public class UserDal : IUserDal
         return isAdmin;
     }
 
+    public async Task<bool> IsFrozen(string id)
+    {
+        var isFrozen = (await _userManager.FindByIdAsync(id) ?? new User()).IsFrozen;
+        return isFrozen;
+    }
+    
+    public async Task<bool> Freeze(string id)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        if (user == null)
+        {
+            return false;
+        }
+        user.IsFrozen = true;
+        await _context.SaveChangesAsync();
+        var isFrozen = (await _userManager.FindByIdAsync(id) ?? new User()).IsFrozen;
+        return isFrozen;
+    }
+    
+    public async Task<bool> UnFreeze(string id)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        if (user == null)
+        {
+            return false;
+        }
+        user.IsFrozen = false;
+        await _context.SaveChangesAsync();
+        var isFrozen = (await _userManager.FindByIdAsync(id) ?? new User()).IsFrozen;
+        return !isFrozen;
+    }
+    
     public async Task<double> GetUserBalance(string id)
     {
         var user = await _userManager.FindByIdAsync(id);

@@ -140,6 +140,18 @@ function Graphs() {
             }
         )
 
+        if (response.status === 400) {
+            response
+                .text()
+                .then(message => {
+                    alert(message.replaceAll('"', '') || 'Bad request')
+                })
+                .catch(() => {
+                    alert('An error occurred while processing the response.')
+                })
+            return false
+        }
+
         if (!response.ok) {
             return false
         }
@@ -257,7 +269,6 @@ function Graphs() {
         }
 
         socket.onmessage = event => {
-            console.log('Received data:', event.data)
             const newData = JSON.parse(event.data) as
                 | LineDataItem[]
                 | CandleGraphItem[]
@@ -301,7 +312,6 @@ function Graphs() {
             return
         }
         setInvalidData(false)
-        console.log('Candle data:', data)
         setStockPrice(data[data.length - 1].Close)
         setCandleData(data)
     }, [])
@@ -435,7 +445,8 @@ function Graphs() {
                     ) : (
                         <div
                             style={{
-                                width: 1200,
+                                width: '1200px',
+                                height: '750px',
                                 backgroundColor: '#FFFFFF',
                                 margin: '35px'
                             }}

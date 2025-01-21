@@ -5,6 +5,7 @@ interface User {
     id: string
     userName: string
     balance: number
+    isFrozen: boolean
 }
 
 async function deleteUser(userId: string): Promise<boolean> {
@@ -33,6 +34,37 @@ async function deleteUser(userId: string): Promise<boolean> {
     }
 }
 
+async function freezeUser(userId: string, isFrozen: boolean): Promise<boolean> {
+    try {
+        const adminId = sessionStorage.getItem('userId')
+
+        var freeze = isFrozen ? 'unfreeze' : 'freeze'
+
+        const response = await fetch(
+            `http://api.localhost/users/${userId}/${freeze}?adminId=${adminId}`,
+            {
+                method: 'PUT',
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem('token')}`
+                }
+            }
+        )
+
+        if (!response.ok) {
+            return false
+        }
+
+        fetchAllUsers()
+        return true
+    } catch (error) {
+        console.error(
+            `Error ${isFrozen ? 'unfreezing' : 'freezing'} user:`,
+            error
+        )
+        return false
+    }
+}
+
 async function fetchAllUsers(): Promise<User[]> {
     try {
         const userId = sessionStorage.getItem('userId')
@@ -53,7 +85,8 @@ async function fetchAllUsers(): Promise<User[]> {
         return data.map((item: User) => ({
             id: item.id,
             userName: item.userName,
-            balance: item.balance / 100
+            balance: item.balance / 100,
+            isFrozen: item.isFrozen
         }))
     } catch (error) {
         console.error('Error fetching users:', error)
@@ -133,6 +166,20 @@ const Home = () => {
                                 padding: '10px',
                                 border: '1px solid #ddd'
                             }}
+                        >
+                            Account frozen
+                        </th>
+                        <th
+                            style={{
+                                padding: '10px',
+                                border: '1px solid #ddd'
+                            }}
+                        ></th>
+                        <th
+                            style={{
+                                padding: '10px',
+                                border: '1px solid #ddd'
+                            }}
                         ></th>
                     </tr>
                 </thead>
@@ -172,6 +219,14 @@ const Home = () => {
                                     border: '1px solid #ddd'
                                 }}
                             >
+                                {user.isFrozen ? 'Yes' : 'No'}
+                            </td>
+                            <td
+                                style={{
+                                    padding: '10px',
+                                    border: '1px solid #ddd'
+                                }}
+                            >
                                 <Button
                                     variant="outlined"
                                     color="error"
@@ -180,6 +235,22 @@ const Home = () => {
                                     }}
                                 >
                                     Delete
+                                </Button>
+                            </td>
+                            <td
+                                style={{
+                                    padding: '10px',
+                                    border: '1px solid #ddd'
+                                }}
+                            >
+                                <Button
+                                    variant="outlined"
+                                    color="warning"
+                                    onClick={() => {
+                                        freezeUser(user.id, user.isFrozen)
+                                    }}
+                                >
+                                    {user.isFrozen ? 'Unfreeze' : 'Freeze'}
                                 </Button>
                             </td>
                         </tr>

@@ -4,6 +4,7 @@ using Logic.Functions;
 using Logic.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Backend_Example.Controllers;
 
@@ -69,6 +70,7 @@ public static class UserController
                 return Results.Json(new { token, userId });
             }
         );
+        
         users.MapPost(
             "/",
             async (
@@ -134,6 +136,64 @@ public static class UserController
                 }
             )
             .RequireAuthorization();
+
+        users.MapPut("/{userId}/freeze",
+            async (string userId, string adminId, HttpContext context, DbStockEngine dbContext,
+                UserManager<DAL.Tables.User> userManager) =>
+            {
+                var userDal = new UserDal(dbContext, userManager);
+
+                if (UserAuthorization(adminId, context) != Results.Ok())
+                {
+                    return UserAuthorization(adminId, context);
+                }
+
+                var userIdFromToken = context.User.FindFirst("userId")?.Value;
+
+                if (string.IsNullOrEmpty(userIdFromToken))
+                    return Results.Unauthorized();
+
+                if (userIdFromToken != adminId)
+                    return Results.Forbid();
+
+                if (!await User.IsAdmin(userDal, userIdFromToken))
+                {
+                    return Results.Unauthorized();
+                }
+
+                var success = await User.FreezeUser(userDal,userId);
+                return success ? Results.Ok() : Results.Conflict();
+                }
+            ).RequireAuthorization();
+        
+        users.MapPut("/{userId}/unfreeze",
+            async (string userId, string adminId, HttpContext context, DbStockEngine dbContext,
+                UserManager<DAL.Tables.User> userManager) =>
+            {
+                var userDal = new UserDal(dbContext, userManager);
+
+                if (UserAuthorization(adminId, context) != Results.Ok())
+                {
+                    return UserAuthorization(adminId, context);
+                }
+
+                var userIdFromToken = context.User.FindFirst("userId")?.Value;
+
+                if (string.IsNullOrEmpty(userIdFromToken))
+                    return Results.Unauthorized();
+
+                if (userIdFromToken != adminId)
+                    return Results.Forbid();
+
+                if (!await User.IsAdmin(userDal, userIdFromToken))
+                {
+                    return Results.Unauthorized();
+                }
+
+                var success = await User.UnFreezeUser(userDal,userId);
+                return success ? Results.Ok() : Results.Conflict();
+            }
+        ).RequireAuthorization();
         
         users
             .MapDelete(
@@ -191,6 +251,40 @@ public static class UserController
                     var userBalance = await User.GetUserBalance(userDal, userId);
 
                     return Results.Json(new { UserBalance = userBalance });
+                }
+            )
+            .RequireAuthorization();
+        
+        users
+            .MapGet(
+                "/{userId}/isfrozen",
+                async (
+                    string userId,
+                    HttpContext context,
+                    DbStockEngine dbContext,
+                    UserManager<DAL.Tables.User> userManager
+                ) =>
+                {
+                    if (UserAuthorization(userId, context) != Results.Ok())
+                    {
+                        return UserAuthorization(userId, context);
+                    }
+
+                    if (userId == "")
+                        return Results.BadRequest();
+
+                    var userIdFromToken = context.User.FindFirst("userId")?.Value;
+
+                    if (string.IsNullOrEmpty(userIdFromToken))
+                        return Results.Unauthorized();
+
+                    if (userIdFromToken != userId)
+                        return Results.Forbid();
+
+                    UserDal userDal = new(dbContext, userManager);
+                    var isFrozen = await User.IsFrozen(userDal, userId);
+
+                    return Results.Json(new { isFrozen });
                 }
             )
             .RequireAuthorization();
@@ -285,6 +379,11 @@ public static class UserController
                     UserDal userDal = new(dbContext, userManager);
                     bool success;
 
+                    var isFrozen = await User.IsFrozen(userDal, id);
+                    if (isFrozen)
+                    {
+                        return Results.BadRequest("This account is frozen.");
+                    }
                     switch (action)
                     {
                         case "buy":
